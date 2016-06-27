@@ -70,7 +70,7 @@ function chunkNode(node, options = {}, counter) {
                 let charClass = tokenClass;
                 if (isPunctuation) {
                     charClass += ` ${puntuactionClass}`;
-                    if (CharAnalyzer.isStopPuntuaction(char)) {
+                    if (CharAnalyzer.isStopPunctuation(char)) {
                         charClass += ` ${options.sentenceStopClass}`;
                     }
                 }
