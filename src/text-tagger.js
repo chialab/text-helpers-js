@@ -121,7 +121,7 @@ export class TextTagger {
             puntuactionClass: 'tagger--token-puntuaction',
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
-            excludeClasses: 'tagger--disable',
+            excludeSelector: 'head, title, meta, script, style, .tagger--disable',
         };
     }
     /**
@@ -140,7 +140,7 @@ export class TextTagger {
      * @property {String} options.sentenceStopClass
      * The class for the stop punctuation token element.
      * @property {String} options.whiteSpaceClass The class for the white space token element.
-     * @property {String} options.excludeClasses The class to ignore on tagging.
+     * @property {String} options.excludeSelector A selector to ignore on tagging.
      */
     constructor(options = {}) {
         this.options = merge(TextTagger.DEFAULTS, options);
@@ -155,10 +155,11 @@ export class TextTagger {
      */
     tag(text, options = {}) {
         options = merge(this.options, options);
-        let n = document.createElement('div');
-        n.innerHTML = text;
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(text, 'text/html');
+        let n = doc.querySelector('body');
         let html = '';
-        let excludeClasses = options.excludeClasses;
+        let excludeSelector = options.excludeSelector;
         let startElementFound = false;
         let lastElementsFound = [];
         Array.prototype.forEach.call(n.childNodes, (node) => {
@@ -168,7 +169,7 @@ export class TextTagger {
                 lastElementsFound.forEach((lastNode) => {
                     html += chunkNode(lastNode, options, this.counter);
                 });
-                if (node.classList && node.classList.contains(excludeClasses)) {
+                if (node.matches(excludeSelector)) {
                     html += node.outerHTML;
                 } else {
                     let clone = node.cloneNode(true);
@@ -200,4 +201,20 @@ export class TextTagger {
         });
         return html;
     }
+}
+
+if (!Element.prototype.matches) {
+    Element.prototype.matches =
+        Element.prototype.matchesSelector ||
+        Element.prototype.mozMatchesSelector ||
+        Element.prototype.msMatchesSelector ||
+        Element.prototype.oMatchesSelector ||
+        Element.prototype.webkitMatchesSelector ||
+        function(s) {
+            let matches = (this.document || this.ownerDocument).querySelectorAll(s);
+            let i = matches.length;
+            // eslint-disable-next-line
+            while (--i >= 0 && matches.item(i) !== this) {}
+            return i > -1;
+        };
 }

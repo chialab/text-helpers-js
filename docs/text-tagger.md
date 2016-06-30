@@ -14,7 +14,7 @@
 | options.puntuactionClass | <code>String</code> | The class for the punctuation token element. |
 | options.sentenceStopClass | <code>String</code> | The class for the stop punctuation token element. |
 | options.whiteSpaceClass | <code>String</code> | The class for the white space token element. |
-| options.excludeClasses | <code>String</code> | The class to ignore on tagging. |
+| options.excludeSelector | <code>String</code> | A selector to ignore on tagging. |
 
 
 * [TextTagger](#TextTagger)
