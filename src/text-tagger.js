@@ -153,11 +153,11 @@ export class TextTagger {
      * @param {Object} options Optional extra options.
      * @return {String} The tagged text.
      */
-    tag(text, options = {}) {
+    tag(text, options = {}, getBody = false) {
         options = merge(this.options, options);
         let parser = new DOMParser();
         let doc = parser.parseFromString(text, 'text/html');
-        let n = doc.querySelector('body');
+        let n = getBody ? doc.querySelector('body') : doc.querySelector('html');
         let html = '';
         let excludeSelector = options.excludeSelector;
         let startElementFound = false;
@@ -173,7 +173,7 @@ export class TextTagger {
                     html += node.outerHTML;
                 } else {
                     let clone = node.cloneNode(true);
-                    clone.innerHTML = this.tag(node.innerHTML, options);
+                    clone.innerHTML = this.tag(node.innerHTML, options, true);
                     html += clone.outerHTML;
                 }
                 break;
