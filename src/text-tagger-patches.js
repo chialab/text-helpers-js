@@ -70,17 +70,21 @@ export class TextPatch {
         let start1 = patch1.start;
         let start2 = patch2.start;
         if (!start2) {
-            return false;
+            return -1;
         }
         if (!start1) {
-            return true;
+            return 1;
         }
         if (start1.indexToken > start2.indexToken) {
-            return true;
-        } else if (start1.type > start2.type) {
-            return true;
+            return 1;
+        } else if (start1.indexToken < start2.indexToken) {
+            return -1;
+        } else if (patch1.type > patch2.type) {
+            return 1;
+        } else if (patch1.type < patch2.type) {
+            return -1;
         }
-        return false;
+        return 0;
     }
 }
 
