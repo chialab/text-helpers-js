@@ -29,14 +29,15 @@ function textToNode(text) {
  * @param {HTMLElement} node The parent to parse.
  * @return {Array} A recursive list of text nodes.
  */
-function findAllTextNodes(node) {
+function findAllTextNodes(node, options = {}) {
     let textNodes = [];
     let clone = Array.prototype.slice.call(node.childNodes, 0);
     clone.forEach((child) => {
         if (child.nodeType === Node.TEXT_NODE) {
             textNodes.push(child);
-        } else if (child.nodeType === Node.ELEMENT_NODE) {
-            textNodes.push(...findAllTextNodes(child));
+        } else if (child.nodeType === Node.ELEMENT_NODE &&
+            !child.matches(options.excludeSelector)) {
+            textNodes.push(...findAllTextNodes(child, options));
         }
     });
     return textNodes;
@@ -61,11 +62,7 @@ function splitTextNode(node) {
             z++;
         }
         let textNode = document.createTextNode(char);
-        if (last) {
-            last.nextToken = textNode;
-        }
-        last = textNode;
-        textNode.indexToken = nodes.push(textNode);
+        nodes.push(textNode);
     }
     return nodes;
 }
@@ -80,11 +77,17 @@ function splitTextNode(node) {
 function replaceTextNode(node) {
     let nodes = splitTextNode(node);
     let parent = node.parentNode;
+    let ref;
     nodes.forEach((child, index) => {
         if (index === 0) {
             parent.replaceChild(child, node);
+            ref = child.nextSibling;
         } else {
-            parent.appendChild(child);
+            if (ref) {
+                parent.insertBefore(child, ref);
+            } else {
+                parent.appendChild(child);
+            }
         }
     });
     return nodes;
@@ -103,6 +106,20 @@ function isLetter(textNode) {
         !CharAnalyzer.isPunctuation(text);
 }
 
+function isLastBlockNode(node, options = {}) {
+    while (node) {
+        if (node.nextSibling) {
+            return false;
+        }
+        node = node.parentNode;
+        if (node.nodeType === Node.ELEMENT_NODE &&
+            node.matches(options.blockSelector)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Get a list of patches for the given node.
  * @private
@@ -110,13 +127,22 @@ function isLetter(textNode) {
  * @param {HTMLElement} node The text node to analyze.
  * @return {Array} A list of TextPatch-es.
  */
-function getPatches(node, modes = []) {
+function getPatches(node, options = {}) {
+    let modes = options.modes;
     let textNodes = [];
-    findAllTextNodes(node)
+    findAllTextNodes(node, options)
         .forEach((child) => {
             let children = replaceTextNode(child);
             textNodes.push(...children);
         });
+    let last;
+    textNodes.forEach((node, index) => {
+        if (last) {
+            last.nextToken = node;
+        }
+        node.indexToken = index;
+        last = node;
+    });
     let patches = [];
     if (modes.indexOf('sentence') !== -1) {
         let desc = new SentenceTextPatch(node);
@@ -124,7 +150,8 @@ function getPatches(node, modes = []) {
             if (!desc.start && isLetter(child)) {
                 desc.setStart(child);
             } else if (desc.start &&
-                (child.textContent.match(CharAnalyzer.PUNCTUATION_REGEX) ||
+                (CharAnalyzer.isStopPunctuation(child.textContent) ||
+                isLastBlockNode(child, options) ||
                 !child.nextToken)) {
                 desc.setEnd(child);
                 patches.push(desc);
@@ -139,7 +166,8 @@ function getPatches(node, modes = []) {
             let next = textNodes[index + 1];
             if (!desc.start && isLet) {
                 desc.setStart(child);
-            } else if (desc.start && (!next || !isLetter(next))) {
+            } else if (desc.start &&
+                (!next || !isLetter(next) || isLastBlockNode(child, options))) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new WordTextPatch(node);
@@ -150,12 +178,21 @@ function getPatches(node, modes = []) {
         textNodes.forEach((child) => {
             patches.push(new LetterTextPatch(node, child));
         });
-    } else if (modes.indexOf('space') !== -1) {
-        textNodes.forEach((child) => {
-            if (CharAnalyzer.isWhiteSpace(child.textContent)) {
-                patches.push(new LetterTextPatch(node, child));
-            }
-        });
+    } else {
+        if (modes.indexOf('space') !== -1) {
+            textNodes.forEach((child) => {
+                if (CharAnalyzer.isWhiteSpace(child.textContent)) {
+                    patches.push(new LetterTextPatch(node, child));
+                }
+            });
+        }
+        if (modes.indexOf('puntuaction') !== -1) {
+            textNodes.forEach((child) => {
+                if (CharAnalyzer.isPunctuation(child.textContent)) {
+                    patches.push(new LetterTextPatch(node, child));
+                }
+            });
+        }
     }
     return patches;
 }
@@ -170,9 +207,9 @@ function getPatches(node, modes = []) {
 function chunkNode(node) {
     let options = this.options;
     let counter = this.counter;
-    let modes = options.modes ||
+    options.modes = options.modes ||
         Array.isArray(options.mode) ? options.mode : options.mode.split(',');
-    let patches = getPatches(node, modes).filter((patch) => patch.exec(options));
+    let patches = getPatches(node, options).filter((patch) => patch.exec(options));
     if (options.setId) {
         patches.sort(TextPatch.sort).forEach((patch) => {
             let token = patch.wrapper;
@@ -188,7 +225,8 @@ export class TextTagger {
         return {
             setId: true,
             useClasses: false,
-            mode: 'letter',
+            mode: undefined,
+            modes: 'letter',
             tokenIdAttr: 'data-token-id',
             tokenTag: 't:span',
             tokenClass: 'tagger--token',
@@ -198,7 +236,8 @@ export class TextTagger {
             puntuactionClass: 'tagger--token-puntuaction',
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
-            excludeSelector: 'head, title, meta, script, style, .tagger--disable',
+            excludeSelector: 'head, title, meta, script, style, iframe, svg, .tagger--disable',
+            blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6',
             id: (index) => index,
         };
     }

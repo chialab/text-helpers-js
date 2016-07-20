@@ -32,11 +32,9 @@ function wrapElements(root, node1, node2, wrapper) {
         let node = node1;
         while (node) {
             let parents = new NodeParents(root, node);
-            let before = parents.getLower(parent);
-            if (before) {
+            let before = parents.getLower(parent) || node;
+            if (children.indexOf(before) === -1) {
                 children.push(before);
-            } else {
-                children.push(node);
             }
             if (node !== node2) {
                 node = node.nextToken;
