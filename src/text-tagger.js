@@ -1,113 +1,186 @@
 import { CharAnalyzer } from './char-analyzer.js';
+import {
+    TextPatch,
+    SentenceTextPatch,
+    WordTextPatch,
+    LetterTextPatch,
+} from './text-tagger-patches.js';
+import { Counter } from './utils/counter.js';
+import { merge } from './utils/merge.js';
 
 /**
- * Merge two object using the first as matrix.
+ * Convert HTML text to HTMLElement.
  * @private
  *
- * @param {Object} defaults The starter object.
- * @param {Object} obj The object to merge.
- * @return {Object} A new object with merged values.
+ * @param {string} text An HTML string.
+ * @return {HTMLElement} The HTMLElement.
  */
-function merge(defaults, obj) {
-    let res = {};
-    for (let k in defaults) {
-        if (typeof obj[k] === 'undefined') {
-            res[k] = defaults[k];
-        } else {
-            res[k] = obj[k];
-        }
-    }
-    return res;
+function textToNode(text) {
+    let isDocument = text.match(/\<(html|head|body)\>/);
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(text, 'text/html');
+    return isDocument ? doc.querySelector('html') : doc.querySelector('body');
 }
+
 /**
- * Transform a token into a tagged element.
+ * Get a recursive list of text nodes in a Node.
  * @private
  *
- * @param {Object} defaults The starter object.
- * @param {Object} obj The object to merge.
- * @return {Object} A new object with merged values.
+ * @param {HTMLElement} node The parent to parse.
+ * @return {Array} A recursive list of text nodes.
  */
-function transform(content, index, options) {
-    // eslint-disable-next-line
-    return `<${options.tokenTag}${options.setId ? ` data-token-id="${index}"` : ''}${options.useClasses ? ` class="${options.tokenClass}"` : ''}>${content}</${options.tokenTag}>`;
+function findAllTextNodes(node) {
+    let textNodes = [];
+    let clone = Array.prototype.slice.call(node.childNodes, 0);
+    clone.forEach((child) => {
+        if (child.nodeType === Node.TEXT_NODE) {
+            textNodes.push(child);
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+            textNodes.push(...findAllTextNodes(child));
+        }
+    });
+    return textNodes;
 }
+
+/**
+ * Split a text node in single character chunks.
+ * @private
+ *
+ * @param {Text} node The text node to split.
+ * @return {Array} A list of chunks.
+ */
+function splitTextNode(node) {
+    let text = node.textContent;
+    let nodes = [];
+    let last;
+    for (let z = 0; z < text.length; z++) {
+        let char = text[z];
+        let nextChar = text[z + 1];
+        if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
+            char += nextChar;
+            z++;
+        }
+        let textNode = document.createTextNode(char);
+        if (last) {
+            last.nextToken = textNode;
+        }
+        last = textNode;
+        textNode.indexToken = nodes.push(textNode);
+    }
+    return nodes;
+}
+
+/**
+ * Replace a text node with its single character chunks.
+ * @private
+ *
+ * @param {Text} node The text node to replace.
+ * @return {Array} A list of chunks.
+ */
+function replaceTextNode(node) {
+    let nodes = splitTextNode(node);
+    let parent = node.parentNode;
+    nodes.forEach((child, index) => {
+        if (index === 0) {
+            parent.replaceChild(child, node);
+        } else {
+            parent.appendChild(child);
+        }
+    });
+    return nodes;
+}
+
+/**
+ * Check if a text node is a valid letter.
+ * @private
+ *
+ * @param {Text} textNode The text node to check.
+ * @return {boolean}
+ */
+function isLetter(textNode) {
+    let text = textNode.textContent;
+    return !CharAnalyzer.isWhiteSpace(text) &&
+        !CharAnalyzer.isPunctuation(text);
+}
+
+/**
+ * Get a list of patches for the given node.
+ * @private
+ *
+ * @param {HTMLElement} node The text node to analyze.
+ * @return {Array} A list of TextPatch-es.
+ */
+function getPatches(node, modes = []) {
+    let textNodes = [];
+    findAllTextNodes(node)
+        .forEach((child) => {
+            let children = replaceTextNode(child);
+            textNodes.push(...children);
+        });
+    let patches = [];
+    if (modes.indexOf('sentence') !== -1) {
+        let desc = new SentenceTextPatch(node);
+        textNodes.forEach((child) => {
+            if (!desc.start && isLetter(child)) {
+                desc.setStart(child);
+            } else if (desc.start &&
+                (child.textContent.match(CharAnalyzer.PUNCTUATION_REGEX) ||
+                !child.nextToken)) {
+                desc.setEnd(child);
+                patches.push(desc);
+                desc = new SentenceTextPatch(node);
+            }
+        });
+    }
+    if (modes.indexOf('word') !== -1) {
+        let desc = new WordTextPatch(node);
+        textNodes.forEach((child, index) => {
+            let isLet = isLetter(child);
+            let next = textNodes[index + 1];
+            if (!desc.start && isLet) {
+                desc.setStart(child);
+            } else if (desc.start && (!next || !isLetter(next))) {
+                desc.setEnd(child);
+                patches.push(desc);
+                desc = new WordTextPatch(node);
+            }
+        });
+    }
+    if (modes.indexOf('letter') !== -1) {
+        textNodes.forEach((child) => {
+            patches.push(new LetterTextPatch(node, child));
+        });
+    } else if (modes.indexOf('space') !== -1) {
+        textNodes.forEach((child) => {
+            if (CharAnalyzer.isWhiteSpace(child.textContent)) {
+                patches.push(new LetterTextPatch(node, child));
+            }
+        });
+    }
+    return patches;
+}
+
 /**
  * Tag a XML node content.
  * @private
  *
- * @param {Node} node The node to tag.
- * @param {Object} options A set of TextTagger options.
- * @param {Object} counter The tag counter for token id generation.
- * @return {String} The tagged text.
+ * @param {HTMLElement} node The node to tag.
+ * @return {string} The tagged XML content.
  */
-function chunkNode(node, options = {}, counter) {
-    let html = '';
-    let tokenClass = options.tokenClass;
-    let puntuactionClass = options.puntuactionClass;
-    let whiteSpaceClass = options.whiteSpaceClass;
-    let chunks = node.textContent.split(/\s+/);
-    let mode = options.mode;
-    chunks.forEach((v, i) => {
-        if (v === '' && i === 0) {
-            return;
-        }
-        if (i !== 0) {
-            html += transform(
-                ' ',
-                counter,
-                merge(options, {
-                    tokenClass: `${tokenClass} ${whiteSpaceClass}`,
-                })
-            );
+function chunkNode(node) {
+    let options = this.options;
+    let counter = this.counter;
+    let modes = options.modes ||
+        Array.isArray(options.mode) ? options.mode : options.mode.split(',');
+    let patches = getPatches(node, modes).filter((patch) => patch.exec(options));
+    if (options.setId) {
+        patches.sort(TextPatch.sort).forEach((patch) => {
+            let token = patch.wrapper;
+            token.setAttribute(options.tokenIdAttr, options.id(counter));
             counter.increase();
-        }
-        let word = '';
-        if (mode === 'letter') {
-            for (let z = 0; z < v.length; z++) {
-                let char = v[z];
-                let nextChar = v[z + 1];
-                let isPunctuation = CharAnalyzer.isPunctuation(char);
-                let charClass = tokenClass;
-                if (isPunctuation) {
-                    charClass += ` ${puntuactionClass}`;
-                    if (CharAnalyzer.isStopPunctuation(char)) {
-                        charClass += ` ${options.sentenceStopClass}`;
-                    }
-                }
-                if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
-                    char += nextChar;
-                    z++;
-                }
-                word += transform(
-                    char,
-                    counter,
-                    merge(options, { tokenClass: charClass })
-                );
-                counter.increase();
-            }
-        } else if (v) {
-            word += transform(
-                v,
-                counter,
-                options
-            );
-            counter.increase();
-        }
-        html += word;
-    });
-    return html;
-}
-
-class Counter {
-    constructor(start = 0) {
-        this.c = start;
+        });
     }
-    increase() {
-        this.c++;
-    }
-    toString() {
-        return this.c;
-    }
+    return node.innerHTML;
 }
 
 export class TextTagger {
@@ -116,12 +189,17 @@ export class TextTagger {
             setId: true,
             useClasses: false,
             mode: 'letter',
+            tokenIdAttr: 'data-token-id',
             tokenTag: 't:span',
             tokenClass: 'tagger--token',
+            tokenLetter: 'tagger--letter',
+            tokenWord: 'tagger--word',
+            tokenSentence: 'tagger--sentence',
             puntuactionClass: 'tagger--token-puntuaction',
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
             excludeSelector: 'head, title, meta, script, style, .tagger--disable',
+            id: (index) => index,
         };
     }
     /**
@@ -153,52 +231,10 @@ export class TextTagger {
      * @param {Object} options Optional extra options.
      * @return {String} The tagged text.
      */
-    tag(text, options = {}, getBody = false) {
+    tag(text, options = {}, getBody = true) {
         options = merge(this.options, options);
-        let parser = new DOMParser();
-        let doc = parser.parseFromString(text, 'text/html');
-        let n = getBody ? doc.querySelector('body') : doc.querySelector('html');
-        let html = '';
-        let excludeSelector = options.excludeSelector;
-        let startElementFound = false;
-        let lastElementsFound = [];
-        Array.prototype.forEach.call(n.childNodes, (node) => {
-            switch (node.nodeType) {
-            case Node.ELEMENT_NODE:
-                startElementFound = true;
-                lastElementsFound.forEach((lastNode) => {
-                    html += chunkNode(lastNode, options, this.counter);
-                });
-                if (node.matches(excludeSelector)) {
-                    html += node.outerHTML;
-                } else {
-                    let clone = node.cloneNode(true);
-                    clone.innerHTML = this.tag(node.innerHTML, options, true);
-                    html += clone.outerHTML;
-                }
-                break;
-            case Node.COMMENT_NODE:
-                break;
-            case Node.TEXT_NODE:
-            default:
-                let isEmpty = node.textContent.replace(/\s/g, '').length === 0;
-                // if new line char, ignore it
-                if ((!startElementFound && isEmpty) ||
-                    (node.textContent.match(/(\r\n|\n|\r)/m) &&
-                    node.textContent.length === 1)) {
-                    break;
-                }
-                if (isEmpty) {
-                    lastElementsFound.push(node);
-                    return;
-                }
-                lastElementsFound.forEach((lastNode) => {
-                    html += chunkNode(lastNode, options, this.counter);
-                });
-                html += chunkNode(node, options, this.counter);
-                break;
-            }
-        });
+        let n = textToNode(text, getBody);
+        let html = chunkNode.call(this, n);
         return html;
     }
 }
