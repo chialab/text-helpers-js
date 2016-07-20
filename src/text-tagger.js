@@ -136,12 +136,12 @@ function getPatches(node, options = {}) {
             textNodes.push(...children);
         });
     let last;
-    textNodes.forEach((node, index) => {
+    textNodes.forEach((n, index) => {
         if (last) {
-            last.nextToken = node;
+            last.nextToken = n;
         }
-        node.indexToken = index;
-        last = node;
+        n.indexToken = index;
+        last = n;
     });
     let patches = [];
     if (modes.indexOf('sentence') !== -1) {
@@ -204,11 +204,8 @@ function getPatches(node, options = {}) {
  * @param {HTMLElement} node The node to tag.
  * @return {string} The tagged XML content.
  */
-function chunkNode(node) {
-    let options = this.options;
+function chunkNode(node, options = {}) {
     let counter = this.counter;
-    options.modes = options.modes ||
-        Array.isArray(options.mode) ? options.mode : options.mode.split(',');
     let patches = getPatches(node, options).filter((patch) => patch.exec(options));
     if (options.setId) {
         patches.sort(TextPatch.sort).forEach((patch) => {
@@ -225,8 +222,7 @@ export class TextTagger {
         return {
             setId: true,
             useClasses: false,
-            mode: undefined,
-            modes: 'letter',
+            modes: ['letter'],
             tokenIdAttr: 'data-token-id',
             tokenTag: 't:span',
             tokenClass: 'tagger--token',
@@ -273,7 +269,7 @@ export class TextTagger {
     tag(text, options = {}, getBody = true) {
         options = merge(this.options, options);
         let n = textToNode(text, getBody);
-        let html = chunkNode.call(this, n);
+        let html = chunkNode.call(this, n, options);
         return html;
     }
 }

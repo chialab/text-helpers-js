@@ -18,7 +18,7 @@ describe('Unit: TextTagger', () => {
         });
 
         it('a simple text in word mode', () => {
-            let tagger = new TextTagger({ mode: 'word' });
+            let tagger = new TextTagger({ modes: ['word'] });
             let text = tagger.tag(SIMPLE);
             box.innerHTML = text;
             assert.equal(
@@ -28,7 +28,7 @@ describe('Unit: TextTagger', () => {
         });
 
         it('a simple text in word and spaces mode', () => {
-            let tagger = new TextTagger({ mode: 'word,space' });
+            let tagger = new TextTagger({ modes: ['word', 'space'] });
             let text = tagger.tag(SIMPLE);
             box.innerHTML = text;
             assert.equal(
@@ -38,7 +38,10 @@ describe('Unit: TextTagger', () => {
         });
 
         it('a simple text in sentences, word and spaces mode', () => {
-            let tagger = new TextTagger({ mode: 'sentence,word,space', useClasses: true });
+            let tagger = new TextTagger({
+                modes: ['sentence', 'word', 'space'],
+                useClasses: true,
+            });
             let text = tagger.tag(SIMPLE);
             box.innerHTML = text;
             assert.equal(
@@ -58,7 +61,7 @@ describe('Unit: TextTagger', () => {
         });
 
         it('a xml text in word mode', () => {
-            let tagger = new TextTagger({ mode: 'word' });
+            let tagger = new TextTagger({ modes: ['word'] });
             let text = tagger.tag(XML);
             box.innerHTML = text;
             assert.equal(
@@ -68,7 +71,7 @@ describe('Unit: TextTagger', () => {
         });
 
         it('a simple text in word and letter mode', () => {
-            let tagger = new TextTagger({ useClasses: true, mode: 'word,letter' });
+            let tagger = new TextTagger({ useClasses: true, modes: ['word', 'letter'] });
             let text = tagger.tag(SIMPLE);
             box.innerHTML = text;
             assert.equal(
