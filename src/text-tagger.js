@@ -106,16 +106,31 @@ function isLetter(textNode) {
         !CharAnalyzer.isPunctuation(text);
 }
 
-function isLastBlockNode(node, options = {}) {
+function isParent(node, parent) {
     while (node) {
-        if (node.nextSibling) {
-            return false;
-        }
-        node = node.parentNode;
-        if (node.nodeType === Node.ELEMENT_NODE &&
-            node.matches(options.blockSelector)) {
+        if (node === parent) {
             return true;
         }
+        node = node.parentNode;
+    }
+    return false;
+}
+
+function isLastBlockNode(node, options = {}) {
+    let scope = node;
+    if (!node.nextToken) {
+        return true;
+    }
+    node = node.parentNode;
+    while (node) {
+        if (node.nodeType === Node.ELEMENT_NODE &&
+            node.matches(options.blockSelector)) {
+            if (isParent(scope.nextToken, node)) {
+                return false;
+            }
+            return true;
+        }
+        node = node.parentNode;
     }
     return false;
 }
@@ -149,7 +164,8 @@ function getPatches(node, options = {}) {
         textNodes.forEach((child) => {
             if (!desc.start && isLetter(child)) {
                 desc.setStart(child);
-            } else if (desc.start &&
+            }
+            if (desc.start &&
                 (CharAnalyzer.isStopPunctuation(child.textContent) ||
                 isLastBlockNode(child, options) ||
                 !child.nextToken)) {
@@ -166,7 +182,8 @@ function getPatches(node, options = {}) {
             let next = textNodes[index + 1];
             if (!desc.start && isLet) {
                 desc.setStart(child);
-            } else if (desc.start &&
+            }
+            if (desc.start &&
                 (!next || !isLetter(next) || isLastBlockNode(child, options))) {
                 desc.setEnd(child);
                 patches.push(desc);

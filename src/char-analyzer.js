@@ -6,41 +6,6 @@ import XRegExp from './vendors/xregexp.js';
  */
 export class CharAnalyzer {
     /**
-     * A regexp for white spaces reconition.
-     * @type RegExp
-     */
-    static get WHITE_SPACES_REGEX() {
-        return new RegExp('[\\s|\\n|\\r]');
-    }
-    /**
-     * A regexp for punctuation reconition.
-     * @type RegExp
-     */
-    static get PUNCTUATION_REGEX() {
-        return new XRegExp('[^\\p{L}|\\s]');
-    }
-    /**
-     * A regexp for stop punctuation reconition.
-     * @type RegExp
-     */
-    static get STOP_PUNCTUATION_REGEX() {
-        return new RegExp('[.|!|?|;|·]');
-    }
-    /**
-     * A regexp for diacritics reconition.
-     * @type RegExp
-     */
-    static get DIACRITICS_REGEX() {
-        return new XRegExp('\\p{M}');
-    }
-    /**
-     * A regexp for a char followed by diacritic reconition.
-     * @type RegExp
-     */
-    static get FULL_DIACRITICS_REGEX() {
-        return new XRegExp('.\\p{M}');
-    }
-    /**
      * Check if char is a white space.
      * @param {String} ch The char to analyze.
      * @return {Boolean}
@@ -76,3 +41,29 @@ export class CharAnalyzer {
         return this.DIACRITICS_REGEX.test(ch);
     }
 }
+
+/**
+ * A regexp for white spaces reconition.
+ * @type RegExp
+ */
+CharAnalyzer.WHITE_SPACES_REGEX = new RegExp('[\\s|\\n|\\r]');
+/**
+ * A regexp for punctuation reconition.
+ * @type RegExp
+ */
+CharAnalyzer.PUNCTUATION_REGEX = new XRegExp('[^\\p{L}|\\s|^\\d]');
+/**
+ * A regexp for stop punctuation reconition.
+ * @type RegExp
+ */
+CharAnalyzer.STOP_PUNCTUATION_REGEX = new RegExp('[.|!|?|;|·]');
+/**
+ * A regexp for diacritics reconition.
+ * @type RegExp
+ */
+CharAnalyzer.DIACRITICS_REGEX = new XRegExp('\\p{M}');
+/**
+ * A regexp for a char followed by diacritic reconition.
+ * @type RegExp
+ */
+CharAnalyzer.FULL_DIACRITICS_REGEX = new XRegExp('.\\p{M}');
