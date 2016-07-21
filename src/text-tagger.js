@@ -16,10 +16,9 @@ import { merge } from './utils/merge.js';
  * @return {HTMLElement} The HTMLElement.
  */
 function textToNode(text) {
-    let isDocument = text.match(/\<(html|head|body)\>/);
     let parser = new DOMParser();
     let doc = parser.parseFromString(text, 'text/html');
-    return isDocument ? doc.querySelector('html') : doc.querySelector('body');
+    return doc.querySelector('html');
 }
 
 /**
@@ -231,7 +230,7 @@ function chunkNode(node, options = {}) {
             counter.increase();
         });
     }
-    return node.innerHTML;
+    return node;
 }
 
 export class TextTagger {
@@ -283,10 +282,28 @@ export class TextTagger {
      * @param {Object} options Optional extra options.
      * @return {String} The tagged text.
      */
-    tag(text, options = {}, getBody = true) {
+    tag(text, options = {}, getBody) {
+        getBody = typeof getBody !== 'undefined' ?
+            getBody :
+            text.match(/<body[^>]*>/);
         options = merge(this.options, options);
-        let n = textToNode(text, getBody);
-        let html = chunkNode.call(this, n, options);
+        let n = textToNode(text);
+        n = chunkNode.call(this, n, options);
+        let html = '';
+        let body = n;
+        if (getBody) {
+            let h = n.querySelector('head');
+            let b = n.querySelector('body');
+            if (h) {
+                html += h.innerHTML;
+            }
+            if (b) {
+                body = b;
+            }
+            html += body.innerHTML;
+        } else {
+            html = body.outerHTML;
+        }
         return html;
     }
 }
