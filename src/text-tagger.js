@@ -117,7 +117,10 @@ function isParent(node, parent) {
 
 function isLastBlockNode(node, options = {}) {
     let scope = node;
-    if (!node.nextToken) {
+    if (!node.nextToken ||
+        (node.nextSibling &&
+        node.nextSibling.matches &&
+        node.nextSibling.matches(options.newLineSelector))) {
         return true;
     }
     node = node.parentNode;
@@ -250,6 +253,7 @@ export class TextTagger {
             whiteSpaceClass: 'tagger--token-whitespace',
             excludeSelector: 'head, title, meta, script, style, iframe, svg, .tagger--disable',
             blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6',
+            newLineSelector: 'br',
             id: (index) => index,
         };
     }
