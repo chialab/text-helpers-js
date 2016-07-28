@@ -52,7 +52,6 @@ function findAllTextNodes(node, options = {}) {
 function splitTextNode(node) {
     let text = node.textContent;
     let nodes = [];
-    let last;
     for (let z = 0; z < text.length; z++) {
         let char = text[z];
         let nextChar = text[z + 1];
@@ -117,14 +116,15 @@ function isParent(node, parent) {
 
 function isLastBlockNode(node, options = {}) {
     let scope = node;
-    if (!node.nextToken ||
-        (node.nextSibling &&
-        node.nextSibling.matches &&
-        node.nextSibling.matches(options.newLineSelector))) {
+    if (!node.nextToken) {
         return true;
     }
-    node = node.parentNode;
     while (node) {
+        if (node.nextSibling &&
+            node.nextSibling.matches &&
+            node.nextSibling.matches(options.newLineSelector)) {
+            return true;
+        }
         if (node.nodeType === Node.ELEMENT_NODE &&
             node.matches(options.blockSelector)) {
             if (isParent(scope.nextToken, node)) {
@@ -252,7 +252,7 @@ export class TextTagger {
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
             excludeSelector: 'head, title, meta, script, style, iframe, svg, .tagger--disable',
-            blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6',
+            blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6, td, th, tr, table',
             newLineSelector: 'br',
             id: (index) => index,
         };
