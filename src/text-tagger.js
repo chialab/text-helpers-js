@@ -137,6 +137,10 @@ function isLastBlockNode(node, options = {}) {
     return false;
 }
 
+function isApostrophe(node) {
+    return node.textContent.match(/[’|\']/);
+}
+
 /**
  * Get a list of patches for the given node.
  * @private
@@ -186,7 +190,7 @@ function getPatches(node, options = {}) {
                 desc.setStart(child);
             }
             if (desc.start &&
-                (!next || !isLetter(next) || isLastBlockNode(child, options))) {
+                (isApostrophe(child) || !next || (!isLetter(next) && !isApostrophe(next)) || isLastBlockNode(child, options))) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new WordTextPatch(node);
