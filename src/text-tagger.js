@@ -122,7 +122,8 @@ function isLastBlockNode(node, options = {}) {
     while (node) {
         if (node.nextSibling &&
             node.nextSibling.matches &&
-            node.nextSibling.matches(options.newLineSelector)) {
+            (node.nextSibling.matches(options.newLineSelector) ||
+            node.nextSibling.matches(options.excludeSelector))) {
             return true;
         }
         if (node.nodeType === Node.ELEMENT_NODE &&
