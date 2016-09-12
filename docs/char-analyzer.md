@@ -10,6 +10,7 @@
     * [`.STOP_PUNCTUATION_REGEX`](#CharAnalyzer.STOP_PUNCTUATION_REGEX) : <code>RegExp</code>
     * [`.DIACRITICS_REGEX`](#CharAnalyzer.DIACRITICS_REGEX) : <code>RegExp</code>
     * [`.FULL_DIACRITICS_REGEX`](#CharAnalyzer.FULL_DIACRITICS_REGEX) : <code>RegExp</code>
+    * [`.ALPHABET_REGEX`](#CharAnalyzer.ALPHABET_REGEX) : <code>RegExp</code>
     * [`.isWhiteSpace(ch)`](#CharAnalyzer.isWhiteSpace) ⇒ <code>Boolean</code>
     * [`.isPunctuation(ch)`](#CharAnalyzer.isPunctuation) ⇒ <code>Boolean</code>
     * [`.isStopPunctuation(ch)`](#CharAnalyzer.isStopPunctuation) ⇒ <code>Boolean</code>
@@ -48,6 +49,12 @@ A regexp for diacritics reconition.
 
 ### `CharAnalyzer.FULL_DIACRITICS_REGEX` : <code>RegExp</code>
 A regexp for a char followed by diacritic reconition.
+
+**Kind**: static property of <code>[CharAnalyzer](#CharAnalyzer)</code>  
+<a name="CharAnalyzer.ALPHABET_REGEX"></a>
+
+### `CharAnalyzer.ALPHABET_REGEX` : <code>RegExp</code>
+A regexp for alphabet chars.
 
 **Kind**: static property of <code>[CharAnalyzer](#CharAnalyzer)</code>  
 <a name="CharAnalyzer.isWhiteSpace"></a>
