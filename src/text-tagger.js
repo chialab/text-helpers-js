@@ -191,7 +191,10 @@ function getPatches(node, options = {}) {
                 desc.setStart(child);
             }
             if (desc.start &&
-                (isApostrophe(child) || !next || (!isLetter(next) && !isApostrophe(next)) || isLastBlockNode(child, options))) {
+                (isApostrophe(child) ||
+                    !next ||
+                    (!isLetter(next) && !isApostrophe(next)) ||
+                    isLastBlockNode(child, options))) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new WordTextPatch(node);
@@ -210,7 +213,7 @@ function getPatches(node, options = {}) {
                 }
             });
         }
-        if (modes.indexOf('puntuaction') !== -1) {
+        if (modes.indexOf('punctuation') !== -1) {
             textNodes.forEach((child) => {
                 if (CharAnalyzer.isPunctuation(child.textContent)) {
                     patches.push(new LetterTextPatch(node, child));
