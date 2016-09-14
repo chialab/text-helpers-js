@@ -30,15 +30,15 @@ function textToNode(text) {
  */
 function findAllTextNodes(node, options = {}) {
     let textNodes = [];
-    let clone = Array.prototype.slice.call(node.childNodes, 0);
-    clone.forEach((child) => {
+    for (let i = 0, len = node.childNodes.length; i < len; i++) {
+        let child = node.childNodes[i];
         if (child.nodeType === Node.TEXT_NODE) {
             textNodes.push(child);
         } else if (child.nodeType === Node.ELEMENT_NODE &&
             !child.matches(options.excludeSelector)) {
             textNodes.push(...findAllTextNodes(child, options));
         }
-    });
+    }
     return textNodes;
 }
 
@@ -138,8 +138,10 @@ function isLastBlockNode(node, options = {}) {
     return false;
 }
 
+const APOSTROPHE_REGEX = /[’|\']/;
+
 function isApostrophe(node) {
-    return node.textContent.match(/[’|\']/);
+    return node.textContent.match(APOSTROPHE_REGEX);
 }
 
 /**

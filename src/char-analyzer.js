@@ -19,7 +19,7 @@ export class CharAnalyzer {
      * @return {Boolean}
      */
     static isPunctuation(ch) {
-        return this.ALPHABET_REGEX.test(ch) &&
+        return this.NOT_ALPHABET_REGEX.test(ch) &&
             this.PUNCTUATION_REGEX.test(ch);
     }
     /**
@@ -39,7 +39,7 @@ export class CharAnalyzer {
         if (ch.length === 2) {
             return this.FULL_DIACRITICS_REGEX.test(ch);
         }
-        return this.ALPHABET_REGEX.test(ch) &&
+        return this.NOT_ALPHABET_REGEX.test(ch) &&
             this.DIACRITICS_REGEX.test(ch);
     }
 }
@@ -70,7 +70,7 @@ CharAnalyzer.DIACRITICS_REGEX = new XRegExp('\\p{M}');
  */
 CharAnalyzer.FULL_DIACRITICS_REGEX = new XRegExp('.\\p{M}');
 /**
- * A regexp for alphabet chars.
+ * A regexp for not alphabet chars.
  * @type RegExp
  */
-CharAnalyzer.ALPHABET_REGEX = /[^a-zA-Z]/;
+CharAnalyzer.NOT_ALPHABET_REGEX = /[^a-zA-Z]/;
