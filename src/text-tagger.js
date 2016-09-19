@@ -261,7 +261,7 @@ export class TextTagger {
             puntuactionClass: 'tagger--token-puntuaction',
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
-            excludeSelector: 'head, title, meta, script, style, iframe, svg, .tagger--disable',
+            excludeSelector: 'head, title, meta, script, style, img, audio, video, object, iframe, svg, .tagger--disable',
             blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6, td, th, tr, table',
             newLineSelector: 'br',
             id: (index) => index,
