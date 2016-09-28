@@ -119,8 +119,10 @@ function isLastBlockNode(node, options = {}) {
     if (!node.nextToken) {
         return true;
     }
+    let isLast = true;
     while (node) {
-        if (node.nextSibling &&
+        if (isLast &&
+            node.nextSibling &&
             node.nextSibling.matches &&
             (node.nextSibling.matches(options.newLineSelector) ||
             node.nextSibling.matches(options.excludeSelector))) {
@@ -133,6 +135,7 @@ function isLastBlockNode(node, options = {}) {
             }
             return true;
         }
+        isLast = isLast && !node.nextSibling;
         node = node.parentNode;
     }
     return false;
