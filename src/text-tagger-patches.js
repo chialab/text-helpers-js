@@ -51,6 +51,10 @@ function wrapElements(root, node1, node2, wrapper) {
     }
 }
 
+function isFunction(fn) {
+    return typeof fn === 'function';
+}
+
 export class TextPatch {
     constructor(root, start, end) {
         this.root = root;
@@ -96,7 +100,42 @@ export class SentenceTextPatch extends TextPatch {
         if (this.start && this.end) {
             let charClass = options.tokenClass;
             if (options.tokenSentence) {
-                charClass += ` ${options.tokenSentence}`;
+                if (isFunction(options.tokenSentence)) {
+                    charClass += ` ${options.tokenSentence(this)}`;
+                } else {
+                    charClass += ` ${options.tokenSentence}`;
+                }
+            }
+            let wrapper = createWrapper(
+                merge(options, {
+                    tokenClass: charClass,
+                })
+            );
+            if (this.start !== this.end) {
+                wrapElements(this.root, this.start, this.end, wrapper);
+            } else {
+                wrapElement(this.start, wrapper);
+            }
+            this.wrapper = wrapper;
+            return true;
+        }
+        return false;
+    }
+}
+
+export class SpeakingTextPatch extends TextPatch {
+    get type() {
+        return 1;
+    }
+    exec(options) {
+        if (this.start && this.end) {
+            let charClass = options.tokenClass;
+            if (options.tokenSpeaking) {
+                if (isFunction(options.tokenSpeaking)) {
+                    charClass += ` ${options.tokenSpeaking(this)}`;
+                } else {
+                    charClass += ` ${options.tokenSpeaking}`;
+                }
             }
             let wrapper = createWrapper(
                 merge(options, {
@@ -117,13 +156,17 @@ export class SentenceTextPatch extends TextPatch {
 
 export class WordTextPatch extends TextPatch {
     get type() {
-        return 1;
+        return 2;
     }
     exec(options) {
         if (this.start && this.end) {
             let charClass = options.tokenClass;
             if (options.tokenWord) {
-                charClass += ` ${options.tokenWord}`;
+                if (isFunction(options.tokenWord)) {
+                    charClass += ` ${options.tokenWord(this)}`;
+                } else {
+                    charClass += ` ${options.tokenWord}`;
+                }
             }
             let wrapper = createWrapper(
                 merge(options, {
@@ -152,14 +195,26 @@ export class LetterTextPatch extends TextPatch {
             let isPunctuation = CharAnalyzer.isPunctuation(char);
             let charClass = options.tokenClass;
             if (options.tokenLetter) {
-                charClass += ` ${options.tokenLetter}`;
+                if (isFunction(options.tokenLetter)) {
+                    charClass += ` ${options.tokenLetter(this)}`;
+                } else {
+                    charClass += ` ${options.tokenLetter}`;
+                }
             }
-            if (isPunctuation && options.puntuactionClass) {
-                charClass += ` ${options.puntuactionClass}`;
+            if (isPunctuation && options.punctuationClass) {
+                if (isFunction(options.punctuationClass)) {
+                    charClass += ` ${options.punctuationClass(this)}`;
+                } else {
+                    charClass += ` ${options.punctuationClass}`;
+                }
             }
             if (isPunctuation &&
                 options.sentenceStopClass && CharAnalyzer.isStopPunctuation(char)) {
-                charClass += ` ${options.sentenceStopClass}`;
+                if (isFunction(options.sentenceStopClass)) {
+                    charClass += ` ${options.sentenceStopClass(this)}`;
+                } else {
+                    charClass += ` ${options.sentenceStopClass}`;
+                }
             }
             let wrapper = createWrapper(
                 merge(options, {

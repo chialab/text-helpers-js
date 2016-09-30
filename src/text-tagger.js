@@ -2,6 +2,7 @@ import { CharAnalyzer } from './char-analyzer.js';
 import {
     TextPatch,
     SentenceTextPatch,
+    SpeakingTextPatch,
     WordTextPatch,
     LetterTextPatch,
 } from './text-tagger-patches.js';
@@ -91,19 +92,6 @@ function replaceTextNode(node) {
     return nodes;
 }
 
-/**
- * Check if a text node is a valid letter.
- * @private
- *
- * @param {Text} textNode The text node to check.
- * @return {boolean}
- */
-function isLetter(textNode) {
-    let text = textNode.textContent;
-    return !CharAnalyzer.isWhiteSpace(text) &&
-        !CharAnalyzer.isPunctuation(text);
-}
-
 function isParent(node, parent) {
     while (node) {
         if (node === parent) {
@@ -115,36 +103,87 @@ function isParent(node, parent) {
 }
 
 function isLastBlockNode(node, options = {}) {
-    let scope = node;
-    if (!node.nextToken) {
-        return true;
+    if (node.hasOwnProperty('__isLast')) {
+        return node.__isLast;
     }
-    let isLast = true;
-    while (node) {
-        if (isLast &&
-            node.nextSibling &&
-            node.nextSibling.matches &&
-            (node.nextSibling.matches(options.newLineSelector) ||
-            node.nextSibling.matches(options.excludeSelector))) {
+    node.__isLast = (function() {
+        if (!node.nextToken) {
             return true;
         }
-        if (node.nodeType === Node.ELEMENT_NODE &&
-            node.matches(options.blockSelector)) {
-            if (isParent(scope.nextToken, node)) {
-                return false;
+        let scope = node;
+        let iterateNode = node;
+        let isLast = true;
+        while (iterateNode) {
+            if (isLast &&
+                iterateNode.nextSibling &&
+                iterateNode.nextSibling.matches &&
+                (iterateNode.nextSibling.matches(options.newLineSelector) ||
+                iterateNode.nextSibling.matches(options.excludeSelector))) {
+                return true;
             }
-            return true;
+            if (iterateNode.nodeType === Node.ELEMENT_NODE &&
+                iterateNode.matches(options.blockSelector)) {
+                if (isParent(scope.nextToken, iterateNode)) {
+                    return false;
+                }
+                return true;
+            }
+            isLast = isLast && !iterateNode.nextSibling;
+            iterateNode = iterateNode.parentNode;
         }
-        isLast = isLast && !node.nextSibling;
-        node = node.parentNode;
+        return false;
+    }());
+    return node.__isLast;
+}
+
+function isWhiteSpace(node) {
+    if (node.hasOwnProperty('__isWhiteSpace')) {
+        return node.__isWhiteSpace;
     }
-    return false;
+    node.__isWhiteSpace = CharAnalyzer.isWhiteSpace(node.textContent);
+    return node.__isWhiteSpace;
+}
+
+function isPunctuation(node) {
+    if (node.hasOwnProperty('__isPunctuation')) {
+        return node.__isPunctuation;
+    }
+    node.__isPunctuation = CharAnalyzer.isPunctuation(node.textContent);
+    return node.__isPunctuation;
+}
+
+function isStopPunctuation(node) {
+    if (node.hasOwnProperty('__isStopPunctuation')) {
+        return node.__isStopPunctuation;
+    }
+    node.__isStopPunctuation = CharAnalyzer.isStopPunctuation(node.textContent);
+    return node.__isStopPunctuation;
+}
+
+/**
+ * Check if a text node is a valid letter.
+ * @private
+ *
+ * @param {Text} textNode The text node to check.
+ * @return {boolean}
+ */
+function isLetter(node) {
+    if (node.hasOwnProperty('__isLetter')) {
+        return node.__isLetter;
+    }
+    node.__isLetter = !isWhiteSpace(node) &&
+        !isPunctuation(node);
+    return node.__isLetter;
 }
 
 const APOSTROPHE_REGEX = /[’|\']/;
 
 function isApostrophe(node) {
-    return node.textContent.match(APOSTROPHE_REGEX);
+    if (node.hasOwnProperty('__isApostrophe')) {
+        return node.__isApostrophe;
+    }
+    node.__isApostrophe = node.textContent.match(APOSTROPHE_REGEX);
+    return node.__isApostrophe;
 }
 
 /**
@@ -166,6 +205,7 @@ function getPatches(node, options = {}) {
     textNodes.forEach((n, index) => {
         if (last) {
             last.nextToken = n;
+            n.prevToken = last;
         }
         n.indexToken = index;
         last = n;
@@ -173,17 +213,53 @@ function getPatches(node, options = {}) {
     let patches = [];
     if (modes.indexOf('sentence') !== -1) {
         let desc = new SentenceTextPatch(node);
-        textNodes.forEach((child) => {
-            if (!desc.start && isLetter(child)) {
+        textNodes.forEach((child, index) => {
+            let isChar = !isWhiteSpace(child);
+            let next = textNodes[index + 1];
+            if (!desc.start && isChar) {
                 desc.setStart(child);
             }
             if (desc.start &&
-                (CharAnalyzer.isStopPunctuation(child.textContent) ||
-                isLastBlockNode(child, options) ||
-                !child.nextToken)) {
+                (
+                    !next ||
+                    isLastBlockNode(child, options) ||
+                    (
+                        isStopPunctuation(child) &&
+                        isWhiteSpace(next)
+                    )
+                )
+            ) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new SentenceTextPatch(node);
+            }
+        });
+    }
+    if (modes.indexOf('speaking') !== -1) {
+        let desc = new SpeakingTextPatch(node);
+        let punctuationMode = modes.indexOf('punctuation') !== -1;
+        textNodes.forEach((child, index) => {
+            let next = textNodes[index + 1];
+            let nextest = textNodes[index + 2];
+            if (!desc.start) {
+                if (isLetter(child)) {
+                    desc.setStart(child);
+                } else if (isPunctuation(child)) {
+                    patches.push(new LetterTextPatch(node, child));
+                }
+            }
+            if (desc.start &&
+                (
+                    !next ||
+                    isWhiteSpace(next) ||
+                    isStopPunctuation(next) ||
+                    isLastBlockNode(child, options) ||
+                    (!isLetter(next) && !isApostrophe(next))
+                )
+            ) {
+                desc.setEnd(child);
+                patches.push(desc);
+                desc = new SpeakingTextPatch(node);
             }
         });
     }
@@ -213,14 +289,14 @@ function getPatches(node, options = {}) {
     } else {
         if (modes.indexOf('space') !== -1) {
             textNodes.forEach((child) => {
-                if (CharAnalyzer.isWhiteSpace(child.textContent)) {
+                if (isWhiteSpace(child)) {
                     patches.push(new LetterTextPatch(node, child));
                 }
             });
         }
         if (modes.indexOf('punctuation') !== -1) {
             textNodes.forEach((child) => {
-                if (CharAnalyzer.isPunctuation(child.textContent)) {
+                if (isPunctuation(child)) {
                     patches.push(new LetterTextPatch(node, child));
                 }
             });
@@ -242,7 +318,10 @@ function chunkNode(node, options = {}) {
     if (options.setId) {
         patches.sort(TextPatch.sort).forEach((patch) => {
             let token = patch.wrapper;
-            token.setAttribute(options.tokenIdAttr, options.id(counter));
+            let id = options.id(patch, counter);
+            if (id) {
+                token.setAttribute(options.tokenIdAttr, id);
+            }
             counter.increase();
         });
     }
@@ -260,14 +339,46 @@ export class TextTagger {
             tokenClass: 'tagger--token',
             tokenLetter: 'tagger--letter',
             tokenWord: 'tagger--word',
+            tokenSpeaking: 'tagger--speaking',
             tokenSentence: 'tagger--sentence',
-            puntuactionClass: 'tagger--token-puntuaction',
+            punctuationClass: 'tagger--token-punctuation',
             sentenceStopClass: 'tagger--token-sentence-stop',
             whiteSpaceClass: 'tagger--token-whitespace',
-            excludeSelector: 'head, title, meta, script, style, img, audio, video, object, iframe, svg, .tagger--disable',
-            blockSelector: 'p, li, ul, div, h1, h2, h3, h4, h5, h6, td, th, tr, table, img, header, article',
+            excludeSelector: [
+                'head',
+                'title',
+                'meta',
+                'script',
+                'style',
+                'img',
+                'audio',
+                'video',
+                'object',
+                'iframe',
+                'svg',
+                '.tagger--disable',
+            ].join(', '),
+            blockSelector: [
+                'p',
+                'li',
+                'ul',
+                'div',
+                'h1',
+                'h2',
+                'h3',
+                'h4',
+                'h5',
+                'h6',
+                'td',
+                'th',
+                'tr',
+                'table',
+                'img',
+                'header',
+                'article',
+            ].join(', '),
             newLineSelector: 'br',
-            id: (index) => index,
+            id: (patch, index) => index,
         };
     }
     /**
