@@ -1,19 +1,5 @@
-import { CharAnalyzer } from './src/char-analyzer.js';
-import { FontAnalyzer } from './src/font-analyzer.js';
-import { TextTagger } from './src/text-tagger.js';
-import { LineHeight } from './src/line-height.js';
-
-export default class TextHelpers {
-    static get CharAnalyzer() {
-        return CharAnalyzer;
-    }
-    static get FontAnalyzer() {
-        return FontAnalyzer;
-    }
-    static get TextTagger() {
-        return TextTagger;
-    }
-    static get LineHeight() {
-        return LineHeight;
-    }
-}
+export { CharAnalyzer } from './src/char-analyzer.js';
+export { FontAnalyzer } from './src/font-analyzer.js';
+export { A11yText } from './src/a11y-text.js';
+export { TextTagger } from './src/text-tagger.js';
+export { LineHeight } from './src/line-height.js';

@@ -34,7 +34,9 @@ function findAllTextNodes(node, options = {}) {
     for (let i = 0, len = node.childNodes.length; i < len; i++) {
         let child = node.childNodes[i];
         if (child.nodeType === Node.TEXT_NODE) {
-            textNodes.push(child);
+            if (child.parentNode !== options.parent) {
+                textNodes.push(child);
+            }
         } else if (child.nodeType === Node.ELEMENT_NODE &&
             !child.matches(options.excludeSelector)) {
             textNodes.push(...findAllTextNodes(child, options));
@@ -144,6 +146,14 @@ function isWhiteSpace(node) {
     return node.__isWhiteSpace;
 }
 
+function isNewLine(node) {
+    if (node.hasOwnProperty('__isNewLine')) {
+        return node.__isNewLine;
+    }
+    node.__isNewLine = CharAnalyzer.isNewLine(node.textContent);
+    return node.__isNewLine;
+}
+
 function isPunctuation(node) {
     if (node.hasOwnProperty('__isPunctuation')) {
         return node.__isPunctuation;
@@ -158,6 +168,14 @@ function isStopPunctuation(node) {
     }
     node.__isStopPunctuation = CharAnalyzer.isStopPunctuation(node.textContent);
     return node.__isStopPunctuation;
+}
+
+function isStartPunctuation(node) {
+    if (node.hasOwnProperty('__isStartPunctuation')) {
+        return node.__isStartPunctuation;
+    }
+    node.__isStartPunctuation = CharAnalyzer.isStartPunctuation(node.textContent);
+    return node.__isStartPunctuation;
 }
 
 /**
@@ -213,34 +231,37 @@ function getPatches(node, options = {}) {
     let patches = [];
     if (modes.indexOf('sentence') !== -1) {
         let desc = new SentenceTextPatch(node);
-        textNodes.forEach((child, index) => {
-            let isChar = !isWhiteSpace(child);
+        // textNodes.forEach((child, index) => {
+        for (let index = 0, len = textNodes.length; index < len; index++) {
+            let child = textNodes[index];
             let next = textNodes[index + 1];
-            if (!desc.start && isChar) {
+            if (!desc.start && !isNewLine(child)) {
                 desc.setStart(child);
             }
             if (desc.start &&
                 (
                     !next ||
+                    isStartPunctuation(next) ||
                     isLastBlockNode(child, options) ||
-                    (
-                        isStopPunctuation(child) &&
-                        isWhiteSpace(next)
-                    )
+                    isStopPunctuation(child)
                 )
             ) {
+                while (next && isStopPunctuation(next)) {
+                    index++;
+                    child = next;
+                    next = textNodes[index];
+                }
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new SentenceTextPatch(node);
             }
-        });
+        // });
+        }
     }
     if (modes.indexOf('speaking') !== -1) {
         let desc = new SpeakingTextPatch(node);
-        let punctuationMode = modes.indexOf('punctuation') !== -1;
         textNodes.forEach((child, index) => {
             let next = textNodes[index + 1];
-            let nextest = textNodes[index + 2];
             if (!desc.start) {
                 if (isLetter(child)) {
                     desc.setStart(child);
@@ -385,6 +406,7 @@ export class TextTagger {
      * A class for letter or words tagging in texts.
      * @class TextTagger
      *
+     * @param {Element} element The element to tag (optional).
      * @param {Object} options A set of options.
      * @property {Boolean} options.setId
      * Should set the data token id attribute to the token element.
@@ -399,40 +421,58 @@ export class TextTagger {
      * @property {String} options.whiteSpaceClass The class for the white space token element.
      * @property {String} options.excludeSelector A selector to ignore on tagging.
      */
-    constructor(options = {}) {
+    constructor(element, options = {}) {
+        if (element instanceof HTMLElement) {
+            this.element = element;
+        }
+        if (typeof element === 'object') {
+            options = element;
+        }
         this.options = merge(TextTagger.DEFAULTS, options);
         this.counter = new Counter();
     }
     /**
      * Tag the text.
      *
-     * @param {String} text The text to tag.
+     * @param {String} text The text to tag (optional).
      * @param {Object} options Optional extra options.
      * @return {String} The tagged text.
      */
     tag(text, options = {}, getBody) {
-        getBody = typeof getBody !== 'undefined' ?
-            getBody :
-            text.match(/<body[^>]*>/);
-        options = merge(this.options, options);
-        let n = textToNode(text);
-        n = chunkNode.call(this, n, options);
-        let html = '';
-        let body = n;
-        if (getBody) {
-            let h = n.querySelector('head');
-            let b = n.querySelector('body');
-            if (h) {
-                html += h.innerHTML;
-            }
-            if (b) {
-                body = b;
-            }
-            html += body.innerHTML;
-        } else {
-            html = body.outerHTML;
+        let element = text;
+        if (this.element) {
+            element = this.element;
+            options = text;
         }
-        return html;
+        let isNode = element instanceof HTMLElement;
+        if (!isNode) {
+            getBody = typeof getBody !== 'undefined' ?
+                getBody :
+                text.match(/<body[^>]*>/);
+        }
+        options = merge(this.options, options);
+        let n = isNode ? element : textToNode(element);
+        options.parent = n;
+        n = chunkNode.call(this, n, options);
+        if (!isNode) {
+            let html = '';
+            let body = n;
+            if (getBody) {
+                let h = n.querySelector('head');
+                let b = n.querySelector('body');
+                if (h) {
+                    html += h.innerHTML;
+                }
+                if (b) {
+                    body = b;
+                }
+                html += body.innerHTML;
+            } else {
+                html = body.outerHTML;
+            }
+            return html;
+        }
+        return element;
     }
 }
 

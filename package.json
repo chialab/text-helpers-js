@@ -5,7 +5,6 @@
   "main": "index.js",
   "build": {
     "bundleName": "text-helpers.js",
-    "exportDefault": true,
     "globalName": "TextHelpers"
   },
   "scripts": {

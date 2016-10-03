@@ -14,6 +14,14 @@ export class CharAnalyzer {
         return this.WHITE_SPACES_REGEX.test(ch);
     }
     /**
+     * Check if char is a new line.
+     * @param {String} ch The char to analyze.
+     * @return {Boolean}
+     */
+    static isNewLine(ch) {
+        return this.NEW_LINE_REGEX.test(ch);
+    }
+    /**
      * Check if char is a punctuation char.
      * @param {String} ch The char to analyze.
      * @return {Boolean}
@@ -29,6 +37,14 @@ export class CharAnalyzer {
      */
     static isStopPunctuation(ch) {
         return this.STOP_PUNCTUATION_REGEX.test(ch);
+    }
+    /**
+     * Check if char is a sentence start punctuation char.
+     * @param {String} ch The char to analyze.
+     * @return {Boolean}
+     */
+    static isStartPunctuation(ch) {
+        return this.START_PUNCTUATION_REGEX.test(ch);
     }
     /**
      * Check if char is a diacritic char.
@@ -50,6 +66,11 @@ export class CharAnalyzer {
  */
 CharAnalyzer.WHITE_SPACES_REGEX = new RegExp('[\\s|\\n|\\r]');
 /**
+ * A regexp for new lines reconition.
+ * @type RegExp
+ */
+CharAnalyzer.NEW_LINE_REGEX = new RegExp('[\\n|\\r]');
+/**
  * A regexp for punctuation reconition.
  * @type RegExp
  */
@@ -58,7 +79,12 @@ CharAnalyzer.PUNCTUATION_REGEX = new XRegExp('[^\\p{L}|\\s|^\\d]');
  * A regexp for stop punctuation reconition.
  * @type RegExp
  */
-CharAnalyzer.STOP_PUNCTUATION_REGEX = new RegExp('[.|!|?|;|·]');
+CharAnalyzer.STOP_PUNCTUATION_REGEX = new RegExp('[.|!|?|;|·|»]');
+/**
+ * A regexp for start punctuation reconition.
+ * @type RegExp
+ */
+CharAnalyzer.START_PUNCTUATION_REGEX = new RegExp('[«]');
 /**
  * A regexp for diacritics reconition.
  * @type RegExp
