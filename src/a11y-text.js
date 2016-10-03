@@ -73,6 +73,7 @@ export class A11yText {
         this.activeBlock = null;
         if (this._onGestures) {
             this.element.removeEventListener('mousemove', this._onGestures);
+            this.element.removeEventListener('touchmove', this._onGestures);
             delete this._onGestures;
         }
     }
@@ -80,9 +81,18 @@ export class A11yText {
     enableFocusMode() {
         this.element.classList.add(this.options.activeFocusMode);
         this._onGestures = (ev) => {
+            let isTouch = !!ev.changedTouches;
+            if (isTouch && ev.changedTouches.length > 1) {
+                return true;
+            }
             let tokenSpeaking = this.tagger.options.tokenSpeaking;
-            let x = ev.clientX;
-            let y = ev.clientY;
+            let x = (isTouch ? ev.changedTouches[0].clientX : ev.clientX);
+            let y = (isTouch ? ev.changedTouches[0].clientY : ev.clientY) - this.lineHeight * 0.66;
+            if (isTouch) {
+                y -= 40;
+            } else {
+                x += 16;
+            }
             let element = document.elementFromPoint(x, y);
             this.activeWord = element.matches(`.${tokenSpeaking}`) ?
                 element :
@@ -93,8 +103,13 @@ export class A11yText {
                     element :
                     element.closest(`.${tokenSentence}`);
             }
+            if (this.activeWord || this.activeSentence) {
+                ev.preventDefault();
+            }
+            return true;
         };
         this.element.addEventListener('mousemove', this._onGestures);
+        this.element.addEventListener('touchmove', this._onGestures);
     }
 
     get focusMode() {
