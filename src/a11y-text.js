@@ -3,6 +3,8 @@ import { FontAnalyzer } from './font-analyzer.js';
 import { LineHeight } from './line-height.js';
 import { TextTagger } from './text-tagger.js';
 
+let ids = 1;
+
 export class A11yText {
     get defaultOptions() {
         return {
@@ -12,8 +14,9 @@ export class A11yText {
                 modes: ['sentence', 'speaking'],
                 useClasses: true,
             },
-            gestures: true,
-            activeGesture: 'a11y-text--active',
+            focusMode: false,
+            blockClass: 'a11y-block',
+            activeFocusMode: 'a11y-text--active',
             activeWord: 'a11y-text-active-word',
             activeSentence: 'a11y-text-active-sentence',
             activeBlock: 'a11y-text-active-block',
@@ -21,10 +24,16 @@ export class A11yText {
     }
 
     constructor(element, options = {}) {
-        this.element = element;
+        this.id = `a11y-text-${ids++}`;
         this.options = merge(this.defaultOptions, options);
+        this.element = element;
+        this.element.setAttribute('data-a11y-id', this.id);
+        this.style = document.createElement('style');
+        this.style.type = 'text/css';
+        this.element.appendChild(this.style);
         if (this.options.autoLineHeight) {
             this.lineHeight = this.calcLineHeight();
+            this.paragraphSpacing = this.lineHeightToParagraphSpacing(this.lineHeight);
         }
         if (this.options.tagger) {
             this.tagger = new TextTagger(
@@ -33,14 +42,44 @@ export class A11yText {
             this.tagger.tag(
                 this.element
             );
-            if (this.options.gestures) {
-                this.handleGestures();
+            let blocks = this.element.querySelectorAll(
+                this.tagger.options.blockSelector
+            );
+            if (blocks) {
+                let blockClass = this.options.blockClass;
+                Array.prototype.forEach.call(blocks, (block) => {
+                    block.classList.add(blockClass);
+                });
+            }
+            if (this.options.focusMode) {
+                this.enableFocusMode();
             }
         }
     }
 
-    handleGestures() {
-        this.element.addEventListener('mousemove', (ev) => {
+    updateStyle() {
+        this.style.textContent = `
+            [data-a11y-id="${this.id}"] .${this.options.blockClass} {
+                line-height: ${this.lineHeight}em;
+                margin-bottom: ${this.paragraphSpacing}em;
+            }
+        `;
+    }
+
+    disableFocusMode() {
+        this.element.classList.remove(this.options.activeFocusMode);
+        this.activeWord = null;
+        this.activeSentence = null;
+        this.activeBlock = null;
+        if (this._onGestures) {
+            this.element.removeEventListener('mousemove', this._onGestures);
+            delete this._onGestures;
+        }
+    }
+
+    enableFocusMode() {
+        this.element.classList.add(this.options.activeFocusMode);
+        this._onGestures = (ev) => {
             let tokenSpeaking = this.tagger.options.tokenSpeaking;
             let x = ev.clientX;
             let y = ev.clientY;
@@ -54,28 +93,12 @@ export class A11yText {
                     element :
                     element.closest(`.${tokenSentence}`);
             }
-            if (this.activeWord || this.activeSentence) {
-                this.over = true;
-            } else {
-                this.over = false;
-            }
-        });
+        };
+        this.element.addEventListener('mousemove', this._onGestures);
     }
 
-    get over() {
-        return this.element.classList.contains(
-            this.options.activeGesture
-        );
-    }
-
-    set over(over) {
-        let classList = this.element.classList;
-        let overClass = this.options.activeGesture;
-        if (over) {
-            classList.add(overClass);
-        } else {
-            classList.remove(overClass);
-        }
+    get focusMode() {
+        return !!this._onGestures;
     }
 
     get activeWord() {
@@ -94,9 +117,6 @@ export class A11yText {
             if (sentence) {
                 this.activeSentence = sentence;
             }
-        } else {
-            this.activeSentence = null;
-            this.activeBlock = null;
         }
     }
 
@@ -111,7 +131,7 @@ export class A11yText {
         }
         if (elem) {
             elem.classList.add(this.options.activeSentence);
-            let blockSelector = this.tagger.options.blockSelector;
+            let blockSelector = `.${this.options.blockClass}`;
             let block = elem.closest(blockSelector);
             if (block) {
                 this.activeBlock = block;
@@ -174,17 +194,23 @@ export class A11yText {
     }
 
     get lineHeight() {
-        return parseFloat(
+        return this.__lineHeight || parseFloat(
             this.computedStyle.getPropertyValue('line-height')
         );
     }
 
     set lineHeight(val) {
-        this.setPropertyWithUnit('line-height', val);
+        this.__lineHeight = val;
+        this.updateStyle();
     }
 
-    get relativeLineHeight() {
-        return this.lineHeight / this.fontSize;
+    get paragraphSpacing() {
+        return this.__paragraphSpacing || this.lineHeightToParagraphSpacing(this.lineHeight);
+    }
+
+    set paragraphSpacing(val) {
+        this.__paragraphSpacing = val;
+        this.updateStyle();
     }
 
     get wordSpacing() {
@@ -200,6 +226,7 @@ export class A11yText {
     get letterSpacing() {
         return parseFloat(
             this.computedStyle.getPropertyValue('letter-spacing')
+                .replace('normal', 0)
         );
     }
 
@@ -239,5 +266,13 @@ export class A11yText {
 
     increaseLetterSpacing(val = 0.1) {
         this.letterSpacing = this.letterSpacing + val;
+    }
+
+    lineHeightToParagraphSpacing(val) {
+        return (val - 1) * 1.66;
+    }
+
+    paragraphSpacingToLineHeight(val) {
+        return val * 0.6 + 1;
     }
 }
