@@ -1,9 +1,15 @@
 import { merge } from './utils/merge.js';
+import { internal } from './utils/internal.js';
 import { FontAnalyzer } from './font-analyzer.js';
 import { LineHeight } from './line-height.js';
 import { TextTagger } from './text-tagger.js';
 
 let ids = 1;
+
+function isSameLine(pos1, pos2) {
+    return (pos1.top + pos1.height * 0.5) <= pos2.bottom &&
+        (pos2.top + pos2.height * 0.5) <= pos1.bottom;
+}
 
 export class A11yText {
     get defaultOptions() {
@@ -18,6 +24,8 @@ export class A11yText {
             blockClass: 'a11y-block',
             activeFocusMode: 'a11y-text--active',
             activeWord: 'a11y-text-active-word',
+            nextActiveSentence: 'a11y-text-next-active-sentence',
+            activeLine: 'a11y-text-active-line',
             activeSentence: 'a11y-text-active-sentence',
             activeBlock: 'a11y-text-active-block',
         };
@@ -42,12 +50,21 @@ export class A11yText {
             this.tagger.tag(
                 this.element
             );
-            let blocks = this.element.querySelectorAll(
+            this.tokens = Array.prototype.slice.call(this.element.querySelectorAll(
+                `.${this.tagger.options.tokenSpeaking}, .${this.tagger.options.punctuationClass}`
+            ), 0);
+            this.speakingTokens = Array.prototype.slice.call(this.element.querySelectorAll(
+                `.${this.tagger.options.tokenSpeaking}`
+            ), 0);
+            this.sentences = Array.prototype.slice.call(this.element.querySelectorAll(
+                `.${this.tagger.options.tokenSentence}`
+            ), 0);
+            let blocks = Array.prototype.slice.call(this.element.querySelectorAll(
                 this.tagger.options.blockSelector
-            );
+            ), 0);
             if (blocks) {
                 let blockClass = this.options.blockClass;
-                Array.prototype.forEach.call(blocks, (block) => {
+                blocks.forEach((block) => {
                     block.classList.add(blockClass);
                 });
             }
@@ -71,27 +88,28 @@ export class A11yText {
         this.activeWord = null;
         this.activeSentence = null;
         this.activeBlock = null;
-        if (this._onGestures) {
-            this.element.removeEventListener('mousemove', this._onGestures);
-            this.element.removeEventListener('touchmove', this._onGestures);
-            delete this._onGestures;
+        if (internal(this).gestureFn) {
+            this.element.removeEventListener('mousemove', internal(this).gestureFn);
+            this.element.removeEventListener('touchmove', internal(this).gestureFn);
+            delete internal(this).gestureFn;
         }
     }
 
     enableFocusMode() {
         this.element.classList.add(this.options.activeFocusMode);
-        this._onGestures = (ev) => {
+        internal(this).gestureFn = (ev) => {
             let isTouch = !!ev.changedTouches;
-            if (isTouch && ev.changedTouches.length > 1) {
+            if (!ev.cancelable || (isTouch && ev.changedTouches.length > 1)) {
                 return true;
             }
             let tokenSpeaking = this.tagger.options.tokenSpeaking;
             let x = (isTouch ? ev.changedTouches[0].clientX : ev.clientX);
-            let y = (isTouch ? ev.changedTouches[0].clientY : ev.clientY) - this.lineHeight * 0.66;
+            let y = (isTouch ? ev.changedTouches[0].clientY : ev.clientY);
             if (isTouch) {
-                y -= 40;
+                y -= 40 + this.lineHeight * 0.66;
             } else {
                 x += 16;
+                y -= this.lineHeight;
             }
             let element = document.elementFromPoint(x, y);
             this.activeWord = element.matches(`.${tokenSpeaking}`) ?
@@ -108,16 +126,16 @@ export class A11yText {
             }
             return true;
         };
-        this.element.addEventListener('mousemove', this._onGestures);
-        this.element.addEventListener('touchmove', this._onGestures);
+        this.element.addEventListener('mousemove', internal(this).gestureFn);
+        this.element.addEventListener('touchmove', internal(this).gestureFn);
     }
 
     get focusMode() {
-        return !!this._onGestures;
+        return !!internal(this).gestureFn;
     }
 
     get activeWord() {
-        return this.element.querySelector(`.${this.options.activeWord}`);
+        return internal(this).activeWord;
     }
 
     set activeWord(elem) {
@@ -126,17 +144,114 @@ export class A11yText {
             old.classList.remove(this.options.activeWord);
         }
         if (elem) {
+            internal(this).activeWord = elem;
             let tokenSentence = this.tagger.options.tokenSentence;
             elem.classList.add(this.options.activeWord);
             let sentence = elem.closest(`.${tokenSentence}`);
             if (sentence) {
                 this.activeSentence = sentence;
             }
+            this.setNextLine();
+            this.setNextSentence();
+        }
+    }
+
+    setNextLine() {
+        let elem = this.activeWord;
+        if (elem) {
+            let line = [];
+            let elemPos = elem.getBoundingClientRect();
+            let io = this.tokens.indexOf(elem);
+            if (io > 0) {
+                let prevIo = io;
+                let prev = this.tokens[prevIo - 1];
+                let prevPos = prev.getBoundingClientRect();
+                while (prevIo >= 0 && prevPos && isSameLine(elemPos, prevPos)) {
+                    prevIo--;
+                    line.push(prev);
+                    prev = this.tokens[prevIo - 1];
+                    prevPos = prev.getBoundingClientRect();
+                }
+            }
+            line.reverse();
+            line.push(elem);
+            let tokensLength = this.tokens.length;
+            if (io < tokensLength) {
+                let nextIo = io;
+                let next = this.tokens[io + 1];
+                let nextPos = next.getBoundingClientRect();
+                while (nextIo < tokensLength && nextPos && isSameLine(elemPos, nextPos)) {
+                    nextIo++;
+                    line.push(next);
+                    next = this.tokens[nextIo + 1];
+                    nextPos = next.getBoundingClientRect();
+                }
+            }
+            this.activeLine = line;
+        } else {
+            this.activeLine = null;
+        }
+    }
+
+    setNextSentence() {
+        let elem = this.activeWord;
+        let line = this.activeLine;
+        if (elem && line) {
+            let speakingClass = this.tagger.options.tokenSpeaking;
+            let siblingsLine = line.filter((sibling) => sibling.classList.contains(speakingClass));
+            if (siblingsLine.pop() === elem) {
+                let io = this.speakingTokens.indexOf(elem);
+                let nextWord = this.speakingTokens[io + 1];
+                if (nextWord) {
+                    this.nextActiveSentence = nextWord.closest(
+                        `.${this.tagger.options.tokenSentence}`
+                    );
+                    return true;
+                }
+            }
+        }
+        this.nextActiveSentence = null;
+        return false;
+    }
+
+    get nextActiveSentence() {
+        return internal(this).nextActiveSentence;
+    }
+
+    set nextActiveSentence(elem) {
+        let old = this.nextActiveSentence;
+        let cl = this.options.nextActiveSentence;
+        if (old) {
+            old.classList.remove(cl);
+        }
+        if (elem) {
+            internal(this).nextActiveSentence = elem;
+            elem.classList.add(cl);
+        }
+    }
+
+    get activeLine() {
+        return internal(this).activeLine;
+    }
+
+    set activeLine(elems) {
+        let olds = this.activeLine;
+        let cl = this.options.activeLine;
+        if (olds) {
+            olds.forEach((old) => {
+                old.classList.remove(cl);
+            });
+        }
+        internal(this).activeLine = elems;
+        if (elems) {
+            elems.forEach((elem) => {
+                elem.classList.add(cl);
+            });
         }
     }
 
     get activeSentence() {
-        return this.element.querySelector(`.${this.options.activeSentence}`);
+        return internal(this).activeSentence;
     }
 
     set activeSentence(elem) {
@@ -144,6 +259,7 @@ export class A11yText {
         if (old) {
             old.classList.remove(this.options.activeSentence);
         }
+        internal(this).activeSentence = elem;
         if (elem) {
             elem.classList.add(this.options.activeSentence);
             let blockSelector = `.${this.options.blockClass}`;
@@ -155,7 +271,7 @@ export class A11yText {
     }
 
     get activeBlock() {
-        return this.element.querySelector(`.${this.options.activeBlock}`);
+        return internal(this).activeBlock;
     }
 
     set activeBlock(elem) {
@@ -164,6 +280,7 @@ export class A11yText {
             old.classList.remove(this.options.activeBlock);
         }
         if (elem) {
+            internal(this).activeBlock = elem;
             elem.classList.add(this.options.activeBlock);
         }
     }
@@ -181,11 +298,13 @@ export class A11yText {
     }
 
     get fontFamily() {
-        this.computedStyle
-            .getPropertyValue('font-family');
+        return internal(this).fontFamily ||
+            this.computedStyle
+                .getPropertyValue('font-family');
     }
 
     set fontFamily(val) {
+        internal(this).fontFamily = val;
         this.setProperty('font-family', val, '');
         if (this.options.autoLineHeight) {
             this.lineHeight = this.calcLineHeight();
@@ -193,7 +312,7 @@ export class A11yText {
     }
 
     get fontSize() {
-        return parseFloat(
+        return internal(this).fontSize || parseFloat(
             this.computedStyle
                 .getPropertyValue('font-size')
                 .replace('px', '')
@@ -201,6 +320,11 @@ export class A11yText {
     }
 
     set fontSize(val) {
+        internal(this).fontSize = val;
+        if (this.options.autoLineHeight) {
+            this.lineHeight = this.calcLineHeight(val);
+            this.paragraphSpacing = this.lineHeightToParagraphSpacing(this.lineHeight);
+        }
         this.setPropertyWithUnit('font-size', val, 'px');
     }
 
@@ -209,43 +333,41 @@ export class A11yText {
     }
 
     get lineHeight() {
-        return this.__lineHeight || parseFloat(
+        return internal(this).lineHeight || parseFloat(
             this.computedStyle.getPropertyValue('line-height')
         );
     }
 
     set lineHeight(val) {
-        this.__lineHeight = val;
+        internal(this).lineHeight = val;
         this.updateStyle();
     }
 
     get paragraphSpacing() {
-        return this.__paragraphSpacing || this.lineHeightToParagraphSpacing(this.lineHeight);
+        return internal(this).paragraphSpacing ||
+            this.lineHeightToParagraphSpacing(this.lineHeight);
     }
 
     set paragraphSpacing(val) {
-        this.__paragraphSpacing = val;
+        internal(this).paragraphSpacing = val;
         this.updateStyle();
     }
 
     get wordSpacing() {
-        return parseFloat(
-            this.computedStyle.getPropertyValue('word-spacing')
-        );
+        return internal(this).wordSpacing;
     }
 
     set wordSpacing(val) {
+        internal(this).wordSpacing = val;
         this.setPropertyWithUnit('word-spacing', val);
     }
 
     get letterSpacing() {
-        return parseFloat(
-            this.computedStyle.getPropertyValue('letter-spacing')
-                .replace('normal', 0)
-        );
+        return internal(this).letterSpacing;
     }
 
     set letterSpacing(val) {
+        internal(this).letterSpacing = val;
         this.setPropertyWithUnit('letter-spacing', val);
     }
 

@@ -9,91 +9,6 @@ import {
 import { Counter } from './utils/counter.js';
 import { merge } from './utils/merge.js';
 
-/**
- * Convert HTML text to HTMLElement.
- * @private
- *
- * @param {string} text An HTML string.
- * @return {HTMLElement} The HTMLElement.
- */
-function textToNode(text) {
-    let parser = new DOMParser();
-    let doc = parser.parseFromString(text, 'text/html');
-    return doc.querySelector('html');
-}
-
-/**
- * Get a recursive list of text nodes in a Node.
- * @private
- *
- * @param {HTMLElement} node The parent to parse.
- * @return {Array} A recursive list of text nodes.
- */
-function findAllTextNodes(node, options = {}) {
-    let textNodes = [];
-    for (let i = 0, len = node.childNodes.length; i < len; i++) {
-        let child = node.childNodes[i];
-        if (child.nodeType === Node.TEXT_NODE) {
-            if (child.parentNode !== options.parent) {
-                textNodes.push(child);
-            }
-        } else if (child.nodeType === Node.ELEMENT_NODE &&
-            !child.matches(options.excludeSelector)) {
-            textNodes.push(...findAllTextNodes(child, options));
-        }
-    }
-    return textNodes;
-}
-
-/**
- * Split a text node in single character chunks.
- * @private
- *
- * @param {Text} node The text node to split.
- * @return {Array} A list of chunks.
- */
-function splitTextNode(node) {
-    let text = node.textContent;
-    let nodes = [];
-    for (let z = 0; z < text.length; z++) {
-        let char = text[z];
-        let nextChar = text[z + 1];
-        if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
-            char += nextChar;
-            z++;
-        }
-        let textNode = document.createTextNode(char);
-        nodes.push(textNode);
-    }
-    return nodes;
-}
-
-/**
- * Replace a text node with its single character chunks.
- * @private
- *
- * @param {Text} node The text node to replace.
- * @return {Array} A list of chunks.
- */
-function replaceTextNode(node) {
-    let nodes = splitTextNode(node);
-    let parent = node.parentNode;
-    let ref;
-    nodes.forEach((child, index) => {
-        if (index === 0) {
-            parent.replaceChild(child, node);
-            ref = child.nextSibling;
-        } else {
-            if (ref) {
-                parent.insertBefore(child, ref);
-            } else {
-                parent.appendChild(child);
-            }
-        }
-    });
-    return nodes;
-}
-
 function isParent(node, parent) {
     while (node) {
         if (node === parent) {
@@ -176,6 +91,91 @@ function isStartPunctuation(node) {
     }
     node.__isStartPunctuation = CharAnalyzer.isStartPunctuation(node.textContent);
     return node.__isStartPunctuation;
+}
+
+/**
+ * Convert HTML text to HTMLElement.
+ * @private
+ *
+ * @param {string} text An HTML string.
+ * @return {HTMLElement} The HTMLElement.
+ */
+function textToNode(text) {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(text, 'text/html');
+    return doc.querySelector('html');
+}
+
+/**
+ * Get a recursive list of text nodes in a Node.
+ * @private
+ *
+ * @param {HTMLElement} node The parent to parse.
+ * @return {Array} A recursive list of text nodes.
+ */
+function findAllTextNodes(node, options = {}) {
+    let textNodes = [];
+    for (let i = 0, len = node.childNodes.length; i < len; i++) {
+        let child = node.childNodes[i];
+        if (child.nodeType === Node.TEXT_NODE) {
+            if (child.parentNode !== options.parent && !isNewLine(child)) {
+                textNodes.push(child);
+            }
+        } else if (child.nodeType === Node.ELEMENT_NODE &&
+            !child.matches(options.excludeSelector)) {
+            textNodes.push(...findAllTextNodes(child, options));
+        }
+    }
+    return textNodes;
+}
+
+/**
+ * Split a text node in single character chunks.
+ * @private
+ *
+ * @param {Text} node The text node to split.
+ * @return {Array} A list of chunks.
+ */
+function splitTextNode(node) {
+    let text = node.textContent;
+    let nodes = [];
+    for (let z = 0; z < text.length; z++) {
+        let char = text[z];
+        let nextChar = text[z + 1];
+        if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
+            char += nextChar;
+            z++;
+        }
+        let textNode = document.createTextNode(char);
+        nodes.push(textNode);
+    }
+    return nodes;
+}
+
+/**
+ * Replace a text node with its single character chunks.
+ * @private
+ *
+ * @param {Text} node The text node to replace.
+ * @return {Array} A list of chunks.
+ */
+function replaceTextNode(node) {
+    let nodes = splitTextNode(node);
+    let parent = node.parentNode;
+    let ref;
+    nodes.forEach((child, index) => {
+        if (index === 0) {
+            parent.replaceChild(child, node);
+            ref = child.nextSibling;
+        } else {
+            if (ref) {
+                parent.insertBefore(child, ref);
+            } else {
+                parent.appendChild(child);
+            }
+        }
+    });
+    return nodes;
 }
 
 /**
