@@ -247,10 +247,12 @@ function getPatches(node, options = {}) {
                     isStopPunctuation(child)
                 )
             ) {
-                while (next && isStopPunctuation(next)) {
-                    nextIndex++;
-                    child = next;
-                    next = textNodes[nextIndex];
+                if (!isLastBlockNode(child, options)) {
+                    while (next && isStopPunctuation(next)) {
+                        nextIndex++;
+                        child = next;
+                        next = textNodes[nextIndex];
+                    }
                 }
                 index = nextIndex - 1;
                 desc.setEnd(child);
