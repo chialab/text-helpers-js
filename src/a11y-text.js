@@ -21,9 +21,15 @@ export class A11yText {
                 useClasses: true,
             },
             focusMode: false,
+            highlightWord: true,
+            highlightNextWord: true,
+            highlightSentence: false,
+            highlightLine: true,
+            highlightNextSentence: false,
             blockClass: 'a11y-block',
             activeFocusMode: 'a11y-text--active',
             activeWord: 'a11y-text-active-word',
+            nextActiveWord: 'a11y-text-next-active-word',
             nextActiveSentence: 'a11y-text-next-active-sentence',
             activeLine: 'a11y-text-active-line',
             activeSentence: 'a11y-text-active-sentence',
@@ -143,20 +149,23 @@ export class A11yText {
         if (old) {
             old.classList.remove(this.options.activeWord);
         }
+        internal(this).activeWord = elem;
         if (elem) {
-            internal(this).activeWord = elem;
+            if (this.options.highlightWord) {
+                elem.classList.add(this.options.activeWord);
+            }
             let tokenSentence = this.tagger.options.tokenSentence;
-            elem.classList.add(this.options.activeWord);
             let sentence = elem.closest(`.${tokenSentence}`);
             if (sentence) {
                 this.activeSentence = sentence;
             }
-            this.setNextLine();
-            this.setNextSentence();
+            if (this.options.highlightLine) {
+                this.setActiveLine();
+            }
         }
     }
 
-    setNextLine() {
+    setActiveLine() {
         let elem = this.activeWord;
         if (elem) {
             let line = [];
@@ -165,12 +174,12 @@ export class A11yText {
             if (io > 0) {
                 let prevIo = io;
                 let prev = this.tokens[prevIo - 1];
-                let prevPos = prev.getBoundingClientRect();
+                let prevPos = prev && prev.getBoundingClientRect();
                 while (prevIo >= 0 && prevPos && isSameLine(elemPos, prevPos)) {
                     prevIo--;
                     line.push(prev);
                     prev = this.tokens[prevIo - 1];
-                    prevPos = prev.getBoundingClientRect();
+                    prevPos = prev && prev.getBoundingClientRect();
                 }
             }
             line.reverse();
@@ -179,12 +188,12 @@ export class A11yText {
             if (io < tokensLength) {
                 let nextIo = io;
                 let next = this.tokens[io + 1];
-                let nextPos = next.getBoundingClientRect();
+                let nextPos = next && next.getBoundingClientRect();
                 while (nextIo < tokensLength && nextPos && isSameLine(elemPos, nextPos)) {
                     nextIo++;
                     line.push(next);
                     next = this.tokens[nextIo + 1];
-                    nextPos = next.getBoundingClientRect();
+                    nextPos = next && next.getBoundingClientRect();
                 }
             }
             this.activeLine = line;
@@ -193,40 +202,20 @@ export class A11yText {
         }
     }
 
-    setNextSentence() {
-        let elem = this.activeWord;
-        let line = this.activeLine;
-        if (elem && line) {
-            let speakingClass = this.tagger.options.tokenSpeaking;
-            let siblingsLine = line.filter((sibling) => sibling.classList.contains(speakingClass));
-            if (siblingsLine.pop() === elem) {
-                let io = this.speakingTokens.indexOf(elem);
-                let nextWord = this.speakingTokens[io + 1];
-                if (nextWord) {
-                    this.nextActiveSentence = nextWord.closest(
-                        `.${this.tagger.options.tokenSentence}`
-                    );
-                    return true;
-                }
-            }
-        }
-        this.nextActiveSentence = null;
-        return false;
+    get nextActiveWord() {
+        return internal(this).nextActiveWord;
     }
 
-    get nextActiveSentence() {
-        return internal(this).nextActiveSentence;
-    }
-
-    set nextActiveSentence(elem) {
-        let old = this.nextActiveSentence;
-        let cl = this.options.nextActiveSentence;
+    set nextActiveWord(elem) {
+        let old = this.nextActiveWord;
         if (old) {
-            old.classList.remove(cl);
+            old.classList.remove(this.options.nextActiveWord);
         }
+        internal(this).nextActiveWord = elem;
         if (elem) {
-            internal(this).nextActiveSentence = elem;
-            elem.classList.add(cl);
+            if (this.options.highlightNextWord) {
+                elem.classList.add(this.options.nextActiveWord);
+            }
         }
     }
 
@@ -261,11 +250,58 @@ export class A11yText {
         }
         internal(this).activeSentence = elem;
         if (elem) {
-            elem.classList.add(this.options.activeSentence);
-            let blockSelector = `.${this.options.blockClass}`;
-            let block = elem.closest(blockSelector);
-            if (block) {
-                this.activeBlock = block;
+            if (this.options.highlightSentence) {
+                elem.classList.add(this.options.activeSentence);
+                let blockSelector = `.${this.options.blockClass}`;
+                let block = elem.closest(blockSelector);
+                if (block) {
+                    this.activeBlock = block;
+                }
+            }
+            this.setNextSentence();
+        }
+    }
+
+    setNextSentence() {
+        let elem = this.activeWord;
+        let line = this.activeLine;
+        if (elem && line) {
+            let lineIo = line.indexOf(elem);
+            if ((line.length - lineIo) < 4) {
+                let speakingClass = this.tagger.options.tokenSpeaking;
+                let siblingsLine = line.filter((sibling) =>
+                    sibling.classList.contains(speakingClass)
+                );
+                let io = this.speakingTokens.indexOf(siblingsLine.pop());
+                let nextWord = this.speakingTokens[io + 1];
+                if (nextWord) {
+                    this.nextActiveWord = nextWord;
+                    this.nextActiveSentence = nextWord.closest(
+                        `.${this.tagger.options.tokenSentence}`
+                    );
+                    return true;
+                }
+            }
+        }
+        this.nextActiveWord = null;
+        this.nextActiveSentence = null;
+        return false;
+    }
+
+    get nextActiveSentence() {
+        return internal(this).nextActiveSentence;
+    }
+
+    set nextActiveSentence(elem) {
+        let old = this.nextActiveSentence;
+        let cl = this.options.nextActiveSentence;
+        if (old) {
+            old.classList.remove(cl);
+        }
+        internal(this).nextActiveSentence = elem;
+        if (elem) {
+            if (this.options.highlightNextSentence) {
+                elem.classList.add(cl);
             }
         }
     }
@@ -354,7 +390,11 @@ export class A11yText {
     }
 
     get wordSpacing() {
-        return internal(this).wordSpacing;
+        return internal(this).wordSpacing || parseFloat(
+            this.computedStyle
+                .getPropertyValue('word-spacing')
+                .replace('px', '')
+        );
     }
 
     set wordSpacing(val) {
@@ -363,7 +403,12 @@ export class A11yText {
     }
 
     get letterSpacing() {
-        return internal(this).letterSpacing;
+        return internal(this).letterSpacing || parseFloat(
+            this.computedStyle
+                .getPropertyValue('letter-spacing')
+                .replace('normal', 0)
+                .replace('px', '')
+        );
     }
 
     set letterSpacing(val) {

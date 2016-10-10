@@ -234,7 +234,8 @@ function getPatches(node, options = {}) {
         // textNodes.forEach((child, index) => {
         for (let index = 0, len = textNodes.length; index < len; index++) {
             let child = textNodes[index];
-            let next = textNodes[index + 1];
+            let nextIndex = index + 1;
+            let next = textNodes[nextIndex];
             if (!desc.start && !isNewLine(child)) {
                 desc.setStart(child);
             }
@@ -247,10 +248,11 @@ function getPatches(node, options = {}) {
                 )
             ) {
                 while (next && isStopPunctuation(next)) {
-                    index++;
+                    nextIndex++;
                     child = next;
-                    next = textNodes[index];
+                    next = textNodes[nextIndex];
                 }
+                index = nextIndex - 1;
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new SentenceTextPatch(node);
@@ -474,20 +476,4 @@ export class TextTagger {
         }
         return element;
     }
-}
-
-if (!Element.prototype.matches) {
-    Element.prototype.matches =
-        Element.prototype.matchesSelector ||
-        Element.prototype.mozMatchesSelector ||
-        Element.prototype.msMatchesSelector ||
-        Element.prototype.oMatchesSelector ||
-        Element.prototype.webkitMatchesSelector ||
-        function(s) {
-            let matches = (this.document || this.ownerDocument).querySelectorAll(s);
-            let i = matches.length;
-            // eslint-disable-next-line
-            while (--i >= 0 && matches.item(i) !== this) {}
-            return i > -1;
-        };
 }
