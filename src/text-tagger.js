@@ -327,6 +327,12 @@ function getPatches(node, options = {}) {
             });
         }
     }
+    (options.extraPatches || []).forEach((patch) => {
+        let res = patch(node, textNodes, options);
+        if (Array.isArray(res)) {
+            patches = patches.concat(res);
+        }
+    });
     return patches;
 }
 
