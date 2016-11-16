@@ -277,9 +277,7 @@ function getPatches(node, options = {}) {
                 (
                     !next ||
                     isWhiteSpace(next) ||
-                    isStopPunctuation(next) ||
-                    isLastBlockNode(child, options) ||
-                    (!isLetter(next) && !isApostrophe(next))
+                    isLastBlockNode(child, options)
                 )
             ) {
                 desc.setEnd(child);
@@ -410,6 +408,7 @@ export class TextTagger {
             ].join(', '),
             newLineSelector: 'br',
             id: (patch, index) => index,
+            extraPatches: [],
         };
     }
     /**
