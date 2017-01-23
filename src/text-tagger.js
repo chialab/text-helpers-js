@@ -65,7 +65,7 @@ function isNewLine(node) {
     if (node.hasOwnProperty('__isNewLine')) {
         return node.__isNewLine;
     }
-    node.__isNewLine = CharAnalyzer.isNewLine(node.textContent);
+    node.__isNewLine = !node.textContent.match(/[^\n]/) && CharAnalyzer.isNewLine(node.textContent);
     return node.__isNewLine;
 }
 
