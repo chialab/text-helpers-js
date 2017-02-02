@@ -204,6 +204,27 @@ function isApostrophe(node) {
     return node.__isApostrophe;
 }
 
+function getParentsNum(node) {
+    let res = [];
+    while (node) {
+        res.push(node)
+        node = node.parentNode;
+    }
+    return res;
+}
+
+function isNotWrappable(first, last) {
+    let parents1 = getParentsNum(first);
+    let parents2 = getParentsNum(last);
+    while (parents2.length < parents1.length) {
+        let el = parents1.shift();
+        if (el.previousSibling) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Get a list of patches for the given node.
  * @private
@@ -244,7 +265,8 @@ function getPatches(node, options = {}) {
                     !next ||
                     isStartPunctuation(next) ||
                     isLastBlockNode(child, options) ||
-                    isStopPunctuation(child)
+                    (isStopPunctuation(child) && !isPunctuation(next) && !isLetter(next)) ||
+                    isNotWrappable(desc.start, next)
                 )
             ) {
                 if (!isLastBlockNode(child, options)) {
@@ -276,8 +298,10 @@ function getPatches(node, options = {}) {
             if (desc.start &&
                 (
                     !next ||
+                    isApostrophe(child) ||
                     isWhiteSpace(next) ||
-                    isLastBlockNode(child, options)
+                    isLastBlockNode(child, options) ||
+                    isNotWrappable(desc.start, next)
                 )
             ) {
                 desc.setEnd(child);
@@ -298,7 +322,8 @@ function getPatches(node, options = {}) {
                 (isApostrophe(child) ||
                     !next ||
                     (!isLetter(next) && !isApostrophe(next)) ||
-                    isLastBlockNode(child, options))) {
+                    isLastBlockNode(child, options)) ||
+                    isNotWrappable(desc.start, next)) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new WordTextPatch(node);
