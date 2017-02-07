@@ -298,7 +298,6 @@ function getPatches(node, options = {}) {
             if (desc.start &&
                 (
                     !next ||
-                    isApostrophe(child) ||
                     isWhiteSpace(next) ||
                     isLastBlockNode(child, options) ||
                     isNotWrappable(desc.start, next)
