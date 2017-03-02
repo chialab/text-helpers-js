@@ -85,7 +85,7 @@ CharAnalyzer.STOP_PUNCTUATION_REGEX = new RegExp('[.|!|?|;|·|»]');
  * A regexp for start punctuation reconition.
  * @type RegExp
  */
-CharAnalyzer.START_PUNCTUATION_REGEX = new RegExp('[«]');
+CharAnalyzer.START_PUNCTUATION_REGEX = new RegExp('[«|¿|¡]');
 /**
  * A regexp for diacritics reconition.
  * @type RegExp

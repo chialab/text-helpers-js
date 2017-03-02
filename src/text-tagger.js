@@ -289,7 +289,7 @@ function getPatches(node, options = {}) {
         textNodes.forEach((child, index) => {
             let next = textNodes[index + 1];
             if (!desc.start) {
-                if (isLetter(child)) {
+                if (isLetter(child) || isStartPunctuation(child)) {
                     desc.setStart(child);
                 } else if (isPunctuation(child)) {
                     patches.push(new LetterTextPatch(node, child));
