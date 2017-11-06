@@ -1,3 +1,6 @@
-/node_modules
-/test
-/src/vendors
+
+# RNA
+node_modules/
+dist/
+public/
+# RNA

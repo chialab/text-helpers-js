@@ -1,8 +1,8 @@
-import { FontAnalyzer } from '../src/font-analyzer.js';
-import { LineHeight } from '../src/line-height.js';
+/* eslint-env mocha */
+import { FontAnalyzer } from '../../src/font-analyzer.js';
+import { LineHeight } from '../../src/line-height.js';
 import { FONTS } from './fonts-info.js';
 
-/* globals describe, before, beforeEach, it, assert */
 describe('Unit: LineHeight', () => {
     describe('Unit: calcLineHeight', () => {
         for (let name in FONTS) {

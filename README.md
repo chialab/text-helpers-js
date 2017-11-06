@@ -1,21 +1,30 @@
-# Text Helpers
-> A set of helpers for text manipulation.
+# @chialab/text-helpers
+
+A set of helpers for text manipulation.
+[![NPM](https://img.shields.io/npm/v/@chialab/text-helpers.svg)](https://www.npmjs.com/package/@chialab/text-helpers)
 
 ## Install
 
-[![NPM](https://img.shields.io/npm/v/chialab-text-helpers.svg)](https://www.npmjs.com/package/chialab-text-helpers)
-```
-$ npm i chialab-text-helpers --save
-```
-[![Bower](https://img.shields.io/bower/v/chialab-text-helpers.svg)](https://github.com/chialab/text-helpers-js)
-```
-$ bower i chialab-text-helpers --save
+```sh
+$ npm install @chialab/text-helpers
 ```
 
-## Dev
+## Development
+### Requirements
 
-[![Chialab es6-workflow](https://img.shields.io/badge/project-es6--workflow-lightgrey.svg)](https://github.com/Chialab/es6-workflow)
-[![Travis](https://img.shields.io/travis/Chialab/text-helpers-js.svg?maxAge=2592000)](https://travis-ci.org/Chialab/text-helpers-js)
-[![Code coverage](https://codecov.io/gh/Chialab/text-helpers-js/branch/master/graph/badge.svg)](https://codecov.io/gh/Chialab/text-helpers-js)
+* Node (>= 6)
+* RNA cli ([https://gitlab.com/chialab/rna-cli](https://gitlab.com/chialab/rna-cli))
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/chialab-sl-007.svg)](https://saucelabs.com/u/chialab-sl-007)
+
+### Build the project.
+
+```
+$ rna bootstrap
+$ rna build --production
+```
+
+### Watch the project.
+```
+$ rna bootstrap
+$ rna watch
+```

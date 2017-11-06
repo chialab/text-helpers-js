@@ -1,7 +1,7 @@
-import { FontAnalyzer } from '../src/font-analyzer.js';
+/* eslint-env mocha */
+import { FontAnalyzer } from '../../src/font-analyzer.js';
 import { FONTS } from './fonts-info.js';
 
-/* globals describe, before, beforeEach, it, assert */
 describe('Unit: FontAnalyzer', () => {
     describe('Unit: xHeight', () => {
         for (let name in FONTS) {

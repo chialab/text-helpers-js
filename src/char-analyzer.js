@@ -1,5 +1,4 @@
-/* global XRegExp */
-import './vendors/xregexp.js';
+import XRegExp from 'xregexp';
 
 /**
  * A class for single char analysis.

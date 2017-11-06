@@ -1,4 +1,4 @@
-import TextMeasurer from './vendors/text-measurer.js';
+import measureText from './utils/measurer.js';
 
 /**
  * Measure the size of a text.
@@ -13,8 +13,7 @@ function measure(name, text, size) {
     measure.cache = measure.cache || {};
     let cacheKey = `${name}_${text}_${size}`;
     if (!measure.cache[cacheKey]) {
-        let textMeasurer = new TextMeasurer();
-        measure.cache[cacheKey] = textMeasurer.measureText({
+        measure.cache[cacheKey] = measureText({
             text,
             fontSize: `${size}`,
             fontWeight: 'normal',

@@ -1,22 +1,12 @@
 {
-  "name": "chialab-text-helpers",
-  "version": "0.4.7",
+  "name": "@chialab/text-helpers",
+  "version": "1.0.0",
   "description": "A set of helpers for text manipulation.",
-  "main": "index.js",
-  "build": {
-    "bundleName": "text-helpers.js",
-    "globalName": "TextHelpers"
-  },
+  "main": "dist/text-helpers.js",
+  "module": "src/index.js",
   "scripts": {
-    "add-editorconfig": "node ./node_modules/es6-workflow/scripts/add-editorconfig.js",
-    "add-eslint": "node ./node_modules/es6-workflow/scripts/add-eslint.js",
-    "add-travis": "node ./node_modules/es6-workflow/scripts/add-travis.js",
-    "build": "node ./node_modules/es6-workflow/scripts/build.js",
-    "codecov": "node ./node_modules/es6-workflow/scripts/codecov.js",
-    "coveralls": "node ./node_modules/es6-workflow/scripts/coveralls.js",
-    "doc": "node ./node_modules/es6-workflow/scripts/doc.js",
-    "test-ci": "node ./node_modules/es6-workflow/scripts/test-ci.js",
-    "test": "node ./node_modules/es6-workflow/scripts/test.js"
+    "build": "rna build --production",
+    "test": "rna unit"
   },
   "keywords": [
     "Chialab",
@@ -24,9 +14,14 @@
     "tag",
     "analyze"
   ],
-  "author": "Chialab <dev@chialab.io> (http://www.chialab.com)",
+  "author": "Chialab <dev@chialab.io> (http://www.chialab.it)",
   "license": "MIT",
+  "structure": "module",
   "devDependencies": {
-    "es6-workflow": "latest"
+    "eslint": "^4.10.0",
+    "eslint-plugin-mocha": "^4.11.0"
+  },
+  "dependencies": {
+    "xregexp": "^3.2.0"
   }
 }

@@ -1,11 +1,11 @@
-import { CharAnalyzer } from '../src/char-analyzer.js';
+/* eslint-env mocha */
+import { CharAnalyzer } from '../../src/char-analyzer.js';
 
-/* globals describe, before, beforeEach, it, assert */
 describe('Unit: CharAnalyzer', () => {
     describe('Unit: isWhiteSpace', () => {
         it('check real white space', () => {
             assert(CharAnalyzer.isWhiteSpace(' '));
-            assert(CharAnalyzer.isWhiteSpace("\n"));
+            assert(CharAnalyzer.isWhiteSpace('\n'));
             assert(CharAnalyzer.isWhiteSpace(`
 `));
         });

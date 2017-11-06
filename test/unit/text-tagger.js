@@ -1,9 +1,9 @@
-import { TextTagger } from '../src/text-tagger.js';
+/* eslint-env mocha */
+import { TextTagger } from '../../src/text-tagger.js';
 
 const SIMPLE = 'The quick brown fox jumps over the lazy dog. Really?';
 const XML = 'The <strong>quick</strong> brown <em>fox jumps</em> over the lazy dog';
 
-/* globals describe, before, beforeEach, it, assert */
 describe('Unit: TextTagger', () => {
     let box = document.createElement('div');
     describe('Unit: tag', () => {

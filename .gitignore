@@ -1,5 +1,11 @@
-.tmp
-npm-debug.log
-/bower_components
+
+
+# RNA-CORE
 /node_modules
 /coverage
+npm-debug.log
+# RNA-CORE
+
+# RNA-STRUCTURE
+dist
+# RNA-STRUCTURE

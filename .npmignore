@@ -1,15 +1,10 @@
-docs/
-samples/
-coverage/
-test/
-build/
 
-.npmignore
-npm-debug.log
-.git*
-.eslintrc.yml
-.eslintignore
-.editorconfig
-.travis.yml
-karma-ci.conf.js
+# RNA-STRUCTURE
+.*
+/node_modules
+/coverage
+/test
+rollup.config.js
+sauce.browsers.js
 karma.conf.js
+# RNA-STRUCTURE
