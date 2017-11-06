@@ -1,10 +1,11 @@
-import { merge } from './utils/merge.js';
-import { internal } from './utils/internal.js';
+import { merge, Symbolic } from '@chialab/proteins';
 import { FontAnalyzer } from './font-analyzer.js';
 import { LineHeight } from './line-height.js';
 import { TextTagger } from './text-tagger.js';
 
 let ids = 1;
+
+const PRIVATE_SYM = new Symbolic('private');
 
 function isSameLine(pos1, pos2) {
     return (pos1.top + pos1.height * 0.5) <= pos2.bottom &&
@@ -38,6 +39,7 @@ export class A11yText {
     }
 
     constructor(element, options = {}) {
+        this[PRIVATE_SYM] = {};
         this.id = `a11y-text-${ids++}`;
         this.options = merge(this.defaultOptions, options);
         this.element = element;
@@ -94,16 +96,16 @@ export class A11yText {
         this.activeWord = null;
         this.activeSentence = null;
         this.activeBlock = null;
-        if (internal(this).gestureFn) {
-            this.element.removeEventListener('mousemove', internal(this).gestureFn);
-            this.element.removeEventListener('touchmove', internal(this).gestureFn);
-            delete internal(this).gestureFn;
+        if (this[PRIVATE_SYM].gestureFn) {
+            this.element.removeEventListener('mousemove', this[PRIVATE_SYM].gestureFn);
+            this.element.removeEventListener('touchmove', this[PRIVATE_SYM].gestureFn);
+            delete this[PRIVATE_SYM].gestureFn;
         }
     }
 
     enableFocusMode() {
         this.element.classList.add(this.options.activeFocusMode);
-        internal(this).gestureFn = (ev) => {
+        this[PRIVATE_SYM].gestureFn = (ev) => {
             let isTouch = !!ev.changedTouches;
             if (!ev.cancelable || (isTouch && ev.changedTouches.length > 1)) {
                 return true;
@@ -132,16 +134,16 @@ export class A11yText {
             }
             return true;
         };
-        this.element.addEventListener('mousemove', internal(this).gestureFn);
-        this.element.addEventListener('touchmove', internal(this).gestureFn);
+        this.element.addEventListener('mousemove', this[PRIVATE_SYM].gestureFn);
+        this.element.addEventListener('touchmove', this[PRIVATE_SYM].gestureFn);
     }
 
     get focusMode() {
-        return !!internal(this).gestureFn;
+        return !!this[PRIVATE_SYM].gestureFn;
     }
 
     get activeWord() {
-        return internal(this).activeWord;
+        return this[PRIVATE_SYM].activeWord;
     }
 
     set activeWord(elem) {
@@ -149,7 +151,7 @@ export class A11yText {
         if (old) {
             old.classList.remove(this.options.activeWord);
         }
-        internal(this).activeWord = elem;
+        this[PRIVATE_SYM].activeWord = elem;
         if (elem) {
             if (this.options.highlightWord) {
                 elem.classList.add(this.options.activeWord);
@@ -203,7 +205,7 @@ export class A11yText {
     }
 
     get nextActiveWord() {
-        return internal(this).nextActiveWord;
+        return this[PRIVATE_SYM].nextActiveWord;
     }
 
     set nextActiveWord(elem) {
@@ -211,7 +213,7 @@ export class A11yText {
         if (old) {
             old.classList.remove(this.options.nextActiveWord);
         }
-        internal(this).nextActiveWord = elem;
+        this[PRIVATE_SYM].nextActiveWord = elem;
         if (elem) {
             if (this.options.highlightNextWord) {
                 elem.classList.add(this.options.nextActiveWord);
@@ -220,7 +222,7 @@ export class A11yText {
     }
 
     get activeLine() {
-        return internal(this).activeLine;
+        return this[PRIVATE_SYM].activeLine;
     }
 
     set activeLine(elems) {
@@ -231,7 +233,7 @@ export class A11yText {
                 old.classList.remove(cl);
             });
         }
-        internal(this).activeLine = elems;
+        this[PRIVATE_SYM].activeLine = elems;
         if (elems) {
             elems.forEach((elem) => {
                 elem.classList.add(cl);
@@ -240,7 +242,7 @@ export class A11yText {
     }
 
     get activeSentence() {
-        return internal(this).activeSentence;
+        return this[PRIVATE_SYM].activeSentence;
     }
 
     set activeSentence(elem) {
@@ -248,7 +250,7 @@ export class A11yText {
         if (old) {
             old.classList.remove(this.options.activeSentence);
         }
-        internal(this).activeSentence = elem;
+        this[PRIVATE_SYM].activeSentence = elem;
         if (elem) {
             if (this.options.highlightSentence) {
                 elem.classList.add(this.options.activeSentence);
@@ -289,7 +291,7 @@ export class A11yText {
     }
 
     get nextActiveSentence() {
-        return internal(this).nextActiveSentence;
+        return this[PRIVATE_SYM].nextActiveSentence;
     }
 
     set nextActiveSentence(elem) {
@@ -298,7 +300,7 @@ export class A11yText {
         if (old) {
             old.classList.remove(cl);
         }
-        internal(this).nextActiveSentence = elem;
+        this[PRIVATE_SYM].nextActiveSentence = elem;
         if (elem) {
             if (this.options.highlightNextSentence) {
                 elem.classList.add(cl);
@@ -307,7 +309,7 @@ export class A11yText {
     }
 
     get activeBlock() {
-        return internal(this).activeBlock;
+        return this[PRIVATE_SYM].activeBlock;
     }
 
     set activeBlock(elem) {
@@ -316,7 +318,7 @@ export class A11yText {
             old.classList.remove(this.options.activeBlock);
         }
         if (elem) {
-            internal(this).activeBlock = elem;
+            this[PRIVATE_SYM].activeBlock = elem;
             elem.classList.add(this.options.activeBlock);
         }
     }
@@ -334,13 +336,13 @@ export class A11yText {
     }
 
     get fontFamily() {
-        return internal(this).fontFamily ||
+        return this[PRIVATE_SYM].fontFamily ||
             this.computedStyle
                 .getPropertyValue('font-family');
     }
 
     set fontFamily(val) {
-        internal(this).fontFamily = val;
+        this[PRIVATE_SYM].fontFamily = val;
         this.setProperty('font-family', val, '');
         if (this.options.autoLineHeight) {
             this.lineHeight = this.calcLineHeight();
@@ -348,7 +350,7 @@ export class A11yText {
     }
 
     get fontSize() {
-        return internal(this).fontSize || parseFloat(
+        return this[PRIVATE_SYM].fontSize || parseFloat(
             this.computedStyle
                 .getPropertyValue('font-size')
                 .replace('px', '')
@@ -356,7 +358,7 @@ export class A11yText {
     }
 
     set fontSize(val) {
-        internal(this).fontSize = val;
+        this[PRIVATE_SYM].fontSize = val;
         if (this.options.autoLineHeight) {
             this.lineHeight = this.calcLineHeight(val);
             this.paragraphSpacing = this.lineHeightToParagraphSpacing(this.lineHeight);
@@ -369,28 +371,28 @@ export class A11yText {
     }
 
     get lineHeight() {
-        return internal(this).lineHeight || parseFloat(
+        return this[PRIVATE_SYM].lineHeight || parseFloat(
             this.computedStyle.getPropertyValue('line-height')
         );
     }
 
     set lineHeight(val) {
-        internal(this).lineHeight = val;
+        this[PRIVATE_SYM].lineHeight = val;
         this.updateStyle();
     }
 
     get paragraphSpacing() {
-        return internal(this).paragraphSpacing ||
+        return this[PRIVATE_SYM].paragraphSpacing ||
             this.lineHeightToParagraphSpacing(this.lineHeight);
     }
 
     set paragraphSpacing(val) {
-        internal(this).paragraphSpacing = val;
+        this[PRIVATE_SYM].paragraphSpacing = val;
         this.updateStyle();
     }
 
     get wordSpacing() {
-        return internal(this).wordSpacing || parseFloat(
+        return this[PRIVATE_SYM].wordSpacing || parseFloat(
             this.computedStyle
                 .getPropertyValue('word-spacing')
                 .replace('px', '')
@@ -398,12 +400,12 @@ export class A11yText {
     }
 
     set wordSpacing(val) {
-        internal(this).wordSpacing = val;
+        this[PRIVATE_SYM].wordSpacing = val;
         this.setPropertyWithUnit('word-spacing', val);
     }
 
     get letterSpacing() {
-        return internal(this).letterSpacing || parseFloat(
+        return this[PRIVATE_SYM].letterSpacing || parseFloat(
             this.computedStyle
                 .getPropertyValue('letter-spacing')
                 .replace('normal', 0)
@@ -412,7 +414,7 @@ export class A11yText {
     }
 
     set letterSpacing(val) {
-        internal(this).letterSpacing = val;
+        this[PRIVATE_SYM].letterSpacing = val;
         this.setPropertyWithUnit('letter-spacing', val);
     }
 
