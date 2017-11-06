@@ -1,3 +1,4 @@
+import { merge, isObject } from '@chialab/proteins';
 import { CharAnalyzer } from './char-analyzer.js';
 import {
     TextPatch,
@@ -7,7 +8,6 @@ import {
     LetterTextPatch,
 } from './text-tagger-patches.js';
 import { Counter } from './utils/counter.js';
-import { merge } from './utils/merge.js';
 
 function isParent(node, parent) {
     while (node) {
@@ -194,7 +194,7 @@ function isLetter(node) {
     return node.__isLetter;
 }
 
-const APOSTROPHE_REGEX = /[’|\']/;
+const APOSTROPHE_REGEX = /[’|']/;
 
 function isApostrophe(node) {
     if (node.hasOwnProperty('__isApostrophe')) {
@@ -207,7 +207,7 @@ function isApostrophe(node) {
 function getParentsNum(node) {
     let res = [];
     while (node) {
-        res.push(node)
+        res.push(node);
         node = node.parentNode;
     }
     return res;
@@ -457,8 +457,7 @@ export class TextTagger {
     constructor(element, options = {}) {
         if (element instanceof HTMLElement) {
             this.element = element;
-        }
-        if (typeof element === 'object') {
+        } else if (isObject(element)) {
             options = element;
         }
         this.options = merge(TextTagger.DEFAULTS, options);
@@ -475,7 +474,7 @@ export class TextTagger {
         let element = text;
         if (this.element) {
             element = this.element;
-            options = text;
+            options = text || {};
         }
         let isNode = element instanceof HTMLElement;
         if (!isNode) {

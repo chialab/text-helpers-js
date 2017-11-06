@@ -1,6 +1,6 @@
+import { merge } from '@chialab/proteins';
 import { CharAnalyzer } from './char-analyzer.js';
 import { NodeParents } from './utils/node-parents.js';
-import { merge } from './utils/merge.js';
 
 /**
  * Create tagger span wrapper.

@@ -22,6 +22,7 @@
     "eslint-plugin-mocha": "^4.11.0"
   },
   "dependencies": {
+    "@chialab/proteins": "^3.0.0-rc.5",
     "xregexp": "^3.2.0"
   }
 }
