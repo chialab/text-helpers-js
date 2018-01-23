@@ -5,7 +5,7 @@
   "main": "dist/text-helpers.js",
   "module": "src/index.js",
   "scripts": {
-    "build": "rna lint + build --production",
+    "build": "rna lint 'src/**/*' + build --production",
     "test": "rna unit"
   },
   "keywords": [
@@ -22,7 +22,6 @@
     "eslint-plugin-mocha": "^4.11.0"
   },
   "dependencies": {
-    "@chialab/proteins": "^3.0.0-rc.5",
-    "xregexp": "^3.2.0"
+    "@chialab/proteins": "^3.0.0-rc.5"
   }
 }
