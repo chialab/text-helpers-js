@@ -13,18 +13,18 @@ $ npm install @chialab/text-helpers
 ### Requirements
 
 * Node (>= 6)
-* RNA cli ([https://gitlab.com/chialab/rna-cli](https://gitlab.com/chialab/rna-cli))
+* RNA cli (`npm install @chialab/rna-cli`)
 
 
 ### Build the project.
 
 ```
-$ rna bootstrap
+$ rna install
 $ rna build --production
 ```
 
 ### Watch the project.
 ```
-$ rna bootstrap
-$ rna watch
+$ rna install
+$ rna build --watch
 ```
