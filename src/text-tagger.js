@@ -476,7 +476,7 @@ export class TextTagger {
             element = this.element;
             options = text || {};
         }
-        let isNode = element instanceof HTMLElement;
+        let isNode = (element instanceof HTMLElement || element instanceof DocumentFragment);
         if (!isNode) {
             getBody = typeof getBody !== 'undefined' ?
                 getBody :
