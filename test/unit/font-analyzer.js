@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 import { FontAnalyzer } from '../../src/font-analyzer.js';
-import { FONTS } from './fonts-info.js';
+import { FONTS, almostEqual } from './fonts-info.js';
 
 describe('Unit: FontAnalyzer', () => {
     before((done) => {
@@ -13,7 +13,7 @@ describe('Unit: FontAnalyzer', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(FontAnalyzer.getXHeight(name), FONTS[name].xHeight);
+                    assert.equal(almostEqual(FontAnalyzer.getXHeight(name), FONTS[name].xHeight));
                 });
             }
         }
@@ -22,7 +22,7 @@ describe('Unit: FontAnalyzer', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(FontAnalyzer.getAscHeight(name), FONTS[name].ascHeight);
+                    assert.equal(almostEqual(FontAnalyzer.getAscHeight(name), FONTS[name].ascHeight));
                 });
             }
         }
