@@ -11,12 +11,12 @@ describe('Unit: LineHeight', () => {
                 it(`check ${name}`, () => {
                     assert(
                         almostEqual(
+                            FONTS[name].optimalLineHeight,
                             LineHeight.calcLineHeight(
                                 14,
                                 FontAnalyzer.getXHeight(name),
                                 FontAnalyzer.getAscHeight(name)
                             ),
-                            FONTS[name].optimalLineHeight,
                             0.1
                         )
                     );
@@ -30,12 +30,12 @@ describe('Unit: LineHeight', () => {
                 it(`check ${name}`, () => {
                     assert(
                         almostEqual(
+                            FONTS[name].optimalFontSize,
                             LineHeight.calcFontSize(
                                 19,
                                 FontAnalyzer.getXHeight(name),
                                 FontAnalyzer.getAscHeight(name)
                             ),
-                            FONTS[name].optimalFontSize,
                             0.1
                         )
                     );

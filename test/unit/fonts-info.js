@@ -30,5 +30,9 @@ for (let k in FONTS) {
 export { FONTS };
 
 export function almostEqual(value, to, sensibility = 1) {
-    return (value >= to - sensibility && value <= to + sensibility);
+    if (value >= to - sensibility && value <= to + sensibility) {
+        return true;
+    }
+    console.log(`aspected ${to} to be equal to ${value}`);
+    return false;
 }
