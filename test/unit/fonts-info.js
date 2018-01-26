@@ -1,3 +1,4 @@
+import './polyfills.js';
 import CSS from './fonts.css';
 
 let style = document.createElement('style');

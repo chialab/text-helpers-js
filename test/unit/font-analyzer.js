@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+import './polyfills.js';
 import { FontAnalyzer } from '../../src/font-analyzer.js';
 import { FONTS, almostEqual } from './fonts-info.js';
 

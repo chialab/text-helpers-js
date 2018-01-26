@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+import './polyfills.js';
 import { CharAnalyzer } from '../../src/char-analyzer.js';
 
 describe('Unit: CharAnalyzer', () => {

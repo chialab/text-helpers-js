@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+import './polyfills.js';
 import { TextTagger } from '../../src/text-tagger.js';
 
 const SIMPLE = 'The quick brown fox jumps over the lazy dog. Really?';
