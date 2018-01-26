@@ -9,7 +9,7 @@ describe('Unit: LineHeight', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(
+                    assert(
                         almostEqual(
                             LineHeight.calcLineHeight(
                                 14,
@@ -28,7 +28,7 @@ describe('Unit: LineHeight', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(
+                    assert(
                         almostEqual(
                             LineHeight.calcFontSize(
                                 19,

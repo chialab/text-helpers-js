@@ -14,7 +14,7 @@ describe('Unit: FontAnalyzer', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(almostEqual(FontAnalyzer.getXHeight(name), FONTS[name].xHeight));
+                    assert(almostEqual(FontAnalyzer.getXHeight(name), FONTS[name].xHeight));
                 });
             }
         }
@@ -23,7 +23,7 @@ describe('Unit: FontAnalyzer', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert.equal(almostEqual(FontAnalyzer.getAscHeight(name), FONTS[name].ascHeight));
+                    assert(almostEqual(FontAnalyzer.getAscHeight(name), FONTS[name].ascHeight));
                 });
             }
         }
