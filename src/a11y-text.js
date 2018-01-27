@@ -5,7 +5,7 @@ import chunk from './chunk.js';
 
 let ids = 1;
 
-const PRIVATE_SYM = new Symbolic('private');
+const PRIVATE_SYM = Symbolic('private');
 
 function isSameLine(pos1, pos2) {
     return (pos1.top + pos1.height * 0.5) <= pos2.bottom &&
