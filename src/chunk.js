@@ -170,8 +170,8 @@ function textToFragment(text) {
     let body = document.createElement('div');
     body.innerHTML = text;
     let fragment = document.createDocumentFragment();
-    for (let i = 0, len = body.childNodes.length; i < len; i++) {
-        fragment.appendChild(body.childNodes[i])
+    while (body.childNodes.length) {
+        fragment.appendChild(body.childNodes[0]);
     }
     return fragment;
 }
