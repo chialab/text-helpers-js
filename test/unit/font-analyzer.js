@@ -3,7 +3,9 @@ import './polyfills.js';
 import { FontAnalyzer } from '../../src/font-analyzer.js';
 import { FONTS, almostEqual, loadFonts } from './fonts-info.js';
 
-describe('Unit: FontAnalyzer', () => {
+describe('Unit: FontAnalyzer', function() {
+    this.timeout(4 * 60 * 1000);
+
     before((done) => {
         loadFonts(done);
     });

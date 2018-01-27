@@ -4,7 +4,9 @@ import { FontAnalyzer } from '../../src/font-analyzer.js';
 import { LineHeight } from '../../src/line-height.js';
 import { FONTS, almostEqual, loadFonts } from './fonts-info.js';
 
-describe('Unit: LineHeight', () => {
+describe('Unit: LineHeight', function() {
+    this.timeout(4 * 60 * 1000);
+
     before((done) => {
         loadFonts(done);
     });
