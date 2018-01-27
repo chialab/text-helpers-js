@@ -19,7 +19,8 @@
   "structure": "module",
   "devDependencies": {
     "eslint": "^4.10.0",
-    "eslint-plugin-mocha": "^4.11.0"
+    "eslint-plugin-mocha": "^4.11.0",
+    "webfontloader": "^1.6.28"
   },
   "dependencies": {
     "@chialab/proteins": "^3.0.0-rc.5"

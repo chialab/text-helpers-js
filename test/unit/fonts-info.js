@@ -1,4 +1,5 @@
 import './polyfills.js';
+import WebFont from 'webfontloader';
 
 const FONTS = {
     Roboto: {
@@ -16,17 +17,12 @@ const FONTS = {
 };
 
 export function loadFonts(callback) {
-    let script = document.createElement('script');
-    script.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js';
-    script.addEventListener('load', () => {
-        window.WebFont.load({
-            google: {
-                families: Object.keys(FONTS),
-            },
-            active: callback,
-        });
+    WebFont.load({
+        google: {
+            families: Object.keys(FONTS),
+        },
+        active: callback,
     });
-    document.head.appendChild(script);
 }
 
 export { FONTS };
