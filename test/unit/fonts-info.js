@@ -1,10 +1,4 @@
 import './polyfills.js';
-import CSS from './fonts.css';
-
-let style = document.createElement('style');
-style.type = 'text/css';
-style.textContent = CSS;
-document.head.appendChild(style);
 
 const FONTS = {
     Roboto: {
@@ -21,10 +15,18 @@ const FONTS = {
     },
 };
 
-for (let k in FONTS) {
-    let span = document.createElement('span');
-    span.setAttribute('style', `font-family: ${k}`);
-    document.body.appendChild(span);
+export function loadFonts(callback) {
+    let script = document.createElement('script');
+    script.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js';
+    script.addEventListener('load', () => {
+        window.WebFont.load({
+            google: {
+                families: Object.keys(FONTS),
+            },
+            active: callback,
+        });
+    });
+    document.head.appendChild(script);
 }
 
 export { FONTS };

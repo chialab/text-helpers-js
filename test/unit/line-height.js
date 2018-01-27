@@ -2,9 +2,13 @@
 import './polyfills.js';
 import { FontAnalyzer } from '../../src/font-analyzer.js';
 import { LineHeight } from '../../src/line-height.js';
-import { FONTS, almostEqual } from './fonts-info.js';
+import { FONTS, almostEqual, loadFonts } from './fonts-info.js';
 
 describe('Unit: LineHeight', () => {
+    before((done) => {
+        loadFonts(done);
+    });
+
     describe('Unit: calcLineHeight', () => {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
