@@ -33,6 +33,5 @@ export function almostEqual(value, to, sensibility = 1) {
     if (value >= to - sensibility && value <= to + sensibility) {
         return true;
     }
-    console.log(`aspected ${to} to be equal to ${value}`);
-    return false;
+    throw new Error(`aspected ${to} to be equal to ${value}`);
 }

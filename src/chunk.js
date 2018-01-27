@@ -1,4 +1,4 @@
-import { merge, isObject } from '@chialab/proteins';
+import { merge } from '@chialab/proteins';
 import { CharAnalyzer } from './char-analyzer.js';
 import {
     TextPatch,
@@ -6,19 +6,17 @@ import {
     SpeakingTextPatch,
     WordTextPatch,
     LetterTextPatch,
-} from './text-tagger-patches.js';
+} from './chunk-patches.js';
 import { Counter } from './utils/counter.js';
 
-function isParent(node, parent) {
-    while (node) {
-        if (node === parent) {
-            return true;
-        }
-        node = node.parentNode;
-    }
-    return false;
-}
-
+/**
+ * Check if a node is the last of a block ancestor.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @param {Object} options Chunk options.
+ * @return {Boolean}
+ */
 function isLastBlockNode(node, options = {}) {
     if (node.hasOwnProperty('__isLast')) {
         return node.__isLast;
@@ -40,7 +38,7 @@ function isLastBlockNode(node, options = {}) {
             }
             if (iterateNode.nodeType === Node.ELEMENT_NODE &&
                 iterateNode.matches(options.blockSelector)) {
-                if (isParent(scope.nextToken, iterateNode)) {
+                if (iterateNode.contains(scope.nextToken)) {
                     return false;
                 }
                 return true;
@@ -53,6 +51,13 @@ function isLastBlockNode(node, options = {}) {
     return node.__isLast;
 }
 
+/**
+ * Check if a node contains whitespaces only.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @return {Boolean}
+ */
 function isWhiteSpace(node) {
     if (node.hasOwnProperty('__isWhiteSpace')) {
         return node.__isWhiteSpace;
@@ -61,6 +66,13 @@ function isWhiteSpace(node) {
     return node.__isWhiteSpace;
 }
 
+/**
+ * Check if a node contains newline chars only.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @return {Boolean}
+ */
 function isNewLine(node) {
     if (node.hasOwnProperty('__isNewLine')) {
         return node.__isNewLine;
@@ -69,6 +81,13 @@ function isNewLine(node) {
     return node.__isNewLine;
 }
 
+/**
+ * Check if a node contains punctuation chars only.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @return {Boolean}
+ */
 function isPunctuation(node) {
     if (node.hasOwnProperty('__isPunctuation')) {
         return node.__isPunctuation;
@@ -77,6 +96,13 @@ function isPunctuation(node) {
     return node.__isPunctuation;
 }
 
+/**
+ * Check if a node contains stop punctuation only.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @return {Boolean}
+ */
 function isStopPunctuation(node) {
     if (node.hasOwnProperty('__isStopPunctuation')) {
         return node.__isStopPunctuation;
@@ -85,6 +111,13 @@ function isStopPunctuation(node) {
     return node.__isStopPunctuation;
 }
 
+/**
+ * Check if a node contains start punctuation only.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @return {Boolean}
+ */
 function isStartPunctuation(node) {
     if (node.hasOwnProperty('__isStartPunctuation')) {
         return node.__isStartPunctuation;
@@ -94,36 +127,73 @@ function isStartPunctuation(node) {
 }
 
 /**
- * Convert HTML text to HTMLElement.
+ * Check if a node contains valid letter only.
+ * @private
+ *
+ * @param {Node} node The text node to check.
+ * @return {boolean}
+ */
+function isLetter(node) {
+    if (node.hasOwnProperty('__isLetter')) {
+        return node.__isLetter;
+    }
+    node.__isLetter = !isWhiteSpace(node) &&
+        !isPunctuation(node);
+    return node.__isLetter;
+}
+
+const APOSTROPHE_REGEX = /[’|']/;
+
+/**
+ * Check if a node contains apostrophe only.
+ * @private
+ *
+ * @param {Node} node The text node to check.
+ * @return {boolean}
+ */
+function isApostrophe(node) {
+    if (node.hasOwnProperty('__isApostrophe')) {
+        return node.__isApostrophe;
+    }
+    node.__isApostrophe = node.textContent.match(APOSTROPHE_REGEX);
+    return node.__isApostrophe;
+}
+
+/**
+ * Convert HTML text to DocumentFragment.
  * @private
  *
  * @param {string} text An HTML string.
- * @return {HTMLElement} The HTMLElement.
+ * @return {DocumentFragment} A DocumentFragment wrapper.
  */
-function textToNode(text) {
-    let parser = new DOMParser();
-    let doc = parser.parseFromString(text, 'text/html');
-    return doc.querySelector('html');
+function textToFragment(text) {
+    let body = document.createElement('div');
+    body.innerHTML = text;
+    let fragment = document.createDocumentFragment();
+    [...body.childNodes].forEach((node) => fragment.appendChild(node));
+    return fragment;
 }
 
 /**
  * Get a recursive list of text nodes in a Node.
  * @private
  *
- * @param {HTMLElement} node The parent to parse.
+ * @param {HTMLElement|DocumentFragment} root The root of the query.
+ * @param {Node} node The current node to parse.
+ * @param {Object} options Chunk options.
  * @return {Array} A recursive list of text nodes.
  */
-function findAllTextNodes(node, options = {}) {
+function findAllTextNodes(root, node, options = {}) {
     let textNodes = [];
     for (let i = 0, len = node.childNodes.length; i < len; i++) {
         let child = node.childNodes[i];
         if (child.nodeType === Node.TEXT_NODE) {
-            if (child.parentNode !== options.parent && !isNewLine(child)) {
+            if (!isNewLine(child)) {
                 textNodes.push(child);
             }
         } else if (child.nodeType === Node.ELEMENT_NODE &&
             !child.matches(options.excludeSelector)) {
-            textNodes.push(...findAllTextNodes(child, options));
+            textNodes.push(...findAllTextNodes(root, child, options));
         }
     }
     return textNodes;
@@ -179,32 +249,13 @@ function replaceTextNode(node) {
 }
 
 /**
- * Check if a text node is a valid letter.
+ * Get a list of ancestors for a node.
  * @private
  *
- * @param {Text} textNode The text node to check.
- * @return {boolean}
+ * @param {Node} node The node.
+ * @return {Array<Node>}
  */
-function isLetter(node) {
-    if (node.hasOwnProperty('__isLetter')) {
-        return node.__isLetter;
-    }
-    node.__isLetter = !isWhiteSpace(node) &&
-        !isPunctuation(node);
-    return node.__isLetter;
-}
-
-const APOSTROPHE_REGEX = /[’|']/;
-
-function isApostrophe(node) {
-    if (node.hasOwnProperty('__isApostrophe')) {
-        return node.__isApostrophe;
-    }
-    node.__isApostrophe = node.textContent.match(APOSTROPHE_REGEX);
-    return node.__isApostrophe;
-}
-
-function getParentsNum(node) {
+function getAncestors(node) {
     let res = [];
     while (node) {
         res.push(node);
@@ -213,9 +264,17 @@ function getParentsNum(node) {
     return res;
 }
 
+/**
+ * Check if a chunk is wrappable.
+ * @private
+ *
+ * @param {Node} first The first node of a chunk.
+ * @param {Node} last The last node of a chunk.
+ * @return {Boolean}
+ */
 function isNotWrappable(first, last) {
-    let parents1 = getParentsNum(first);
-    let parents2 = getParentsNum(last);
+    let parents1 = getAncestors(first);
+    let parents2 = getAncestors(last);
     while (parents2.length < parents1.length) {
         let el = parents1.shift();
         if (el.previousSibling) {
@@ -229,13 +288,15 @@ function isNotWrappable(first, last) {
  * Get a list of patches for the given node.
  * @private
  *
- * @param {HTMLElement} node The text node to analyze.
+ * @param {HTMLElement|DocumentFragment} root The root of the query.
+ * @param {Node} node The text node to analyze.
+ * @param {Object} options Chunk options.
  * @return {Array} A list of TextPatch-es.
  */
-function getPatches(node, options = {}) {
+function getPatches(root, node, options = {}) {
     let modes = options.modes;
     let textNodes = [];
-    findAllTextNodes(node, options)
+    findAllTextNodes(root, node, options)
         .forEach((child) => {
             let children = replaceTextNode(child);
             textNodes.push(...children);
@@ -252,7 +313,6 @@ function getPatches(node, options = {}) {
     let patches = [];
     if (modes.indexOf('sentence') !== -1) {
         let desc = new SentenceTextPatch(node);
-        // textNodes.forEach((child, index) => {
         for (let index = 0, len = textNodes.length; index < len; index++) {
             let child = textNodes[index];
             let nextIndex = index + 1;
@@ -281,7 +341,6 @@ function getPatches(node, options = {}) {
                 patches.push(desc);
                 desc = new SentenceTextPatch(node);
             }
-        // });
         }
     }
     if (modes.indexOf('speaking') !== -1) {
@@ -362,12 +421,14 @@ function getPatches(node, options = {}) {
  * Tag a XML node content.
  * @private
  *
- * @param {HTMLElement} node The node to tag.
+ * @param {HTMLElement|DocumentFragment} root The root of the query.
+ * @param {Node} node The node to tag.
+ * @param {Object} options Chunk options.
+ * @param {Counter} counter The chunks counter.
  * @return {string} The tagged XML content.
  */
-function chunkNode(node, options = {}) {
-    let counter = this.counter;
-    let patches = getPatches(node, options).filter((patch) => patch.exec(options));
+function chunkNode(root, node, options = {}, counter = new Counter()) {
+    let patches = getPatches(root, node, options).filter((patch) => patch.exec(options));
     if (options.setId) {
         patches.sort(TextPatch.sort).forEach((patch) => {
             let token = patch.wrapper;
@@ -381,129 +442,83 @@ function chunkNode(node, options = {}) {
     return node;
 }
 
-export class TextTagger {
-    static get DEFAULTS() {
-        return {
-            setId: true,
-            useClasses: false,
-            modes: ['letter'],
-            tokenIdAttr: 'data-token-id',
-            tokenTag: 't:span',
-            tokenClass: 'tagger--token',
-            tokenLetter: 'tagger--letter',
-            tokenWord: 'tagger--word',
-            tokenSpeaking: 'tagger--speaking',
-            tokenSentence: 'tagger--sentence',
-            punctuationClass: 'tagger--token-punctuation',
-            sentenceStopClass: 'tagger--token-sentence-stop',
-            whiteSpaceClass: 'tagger--token-whitespace',
-            excludeSelector: [
-                'head',
-                'title',
-                'meta',
-                'script',
-                'style',
-                'img',
-                'audio',
-                'video',
-                'object',
-                'iframe',
-                'svg',
-                '.tagger--disable',
-            ].join(', '),
-            blockSelector: [
-                'p',
-                'li',
-                'ul',
-                'div',
-                'h1',
-                'h2',
-                'h3',
-                'h4',
-                'h5',
-                'h6',
-                'td',
-                'th',
-                'tr',
-                'table',
-                'img',
-                'header',
-                'article',
-            ].join(', '),
-            newLineSelector: 'br',
-            id: (patch, index) => index,
-            extraPatches: [],
-        };
+/**
+ * Default chunk options.
+ * @type {Object}
+ * @private
+ */
+const DEFAULTS = {
+    setId: true,
+    useClasses: false,
+    modes: ['letter'],
+    tokenIdAttr: 'data-token-id',
+    tokenTag: 't:span',
+    tokenClass: 'tagger--token',
+    tokenLetter: 'tagger--letter',
+    tokenWord: 'tagger--word',
+    tokenSpeaking: 'tagger--speaking',
+    tokenSentence: 'tagger--sentence',
+    punctuationClass: 'tagger--token-punctuation',
+    sentenceStopClass: 'tagger--token-sentence-stop',
+    whiteSpaceClass: 'tagger--token-whitespace',
+    excludeSelector: [
+        'head',
+        'title',
+        'meta',
+        'script',
+        'style',
+        'img',
+        'audio',
+        'video',
+        'object',
+        'iframe',
+        'svg',
+        '.tagger--disable',
+    ].join(', '),
+    blockSelector: [
+        'p',
+        'li',
+        'ul',
+        'div',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'td',
+        'th',
+        'tr',
+        'table',
+        'img',
+        'header',
+        'article',
+    ].join(', '),
+    newLineSelector: 'br',
+    id: (patch, index) => index,
+    extraPatches: [],
+};
+
+/**
+ * chunk the text.
+ *
+ * @param {Element|String} element The element to chunk or HTML content.
+ * @param {Object} options A set of options.
+ * @property {Boolean} options.setId Should set the data token id attribute to the token element.
+ * @property {Boolean} options.useClasses Should set the token class to the token element.
+ * @property {String} options.mode The chunk method ("letter" or "word").
+ * @property {String} options.tokenTag The chunk for the token element.
+ * @property {String} options.tokenClass The class for the token element.
+ * @property {String} options.puntuactionClass The class for the punctuation token element.
+ * @property {String} options.sentenceStopClass The class for the stop punctuation token element.
+ * @property {String} options.whiteSpaceClass The class for the white space token element.
+ * @property {String} options.excludeSelector A selector to ignore on chunking.
+ * @return {HTMLElement|DocumentFragment} The chunked document.
+ */
+export default function chunk(element, options = {}) {
+    if (typeof element === 'string') {
+        element = textToFragment(element);
     }
-    /**
-     * A class for letter or words tagging in texts.
-     * @class TextTagger
-     *
-     * @param {Element} element The element to tag (optional).
-     * @param {Object} options A set of options.
-     * @property {Boolean} options.setId
-     * Should set the data token id attribute to the token element.
-     * @property {Boolean} options.useClasses
-     * Should set the token class to the token element.
-     * @property {String} options.mode The tag method ("letter" or "word").
-     * @property {String} options.tokenTag The tag for the token element.
-     * @property {String} options.tokenClass The class for the token element.
-     * @property {String} options.puntuactionClass The class for the punctuation token element.
-     * @property {String} options.sentenceStopClass
-     * The class for the stop punctuation token element.
-     * @property {String} options.whiteSpaceClass The class for the white space token element.
-     * @property {String} options.excludeSelector A selector to ignore on tagging.
-     */
-    constructor(element, options = {}) {
-        if (element instanceof HTMLElement) {
-            this.element = element;
-        } else if (isObject(element)) {
-            options = element;
-        }
-        this.options = merge(TextTagger.DEFAULTS, options);
-        this.counter = new Counter();
-    }
-    /**
-     * Tag the text.
-     *
-     * @param {String} text The text to tag (optional).
-     * @param {Object} options Optional extra options.
-     * @return {String} The tagged text.
-     */
-    tag(text, options = {}, getBody) {
-        let element = text;
-        if (this.element) {
-            element = this.element;
-            options = text || {};
-        }
-        let isNode = (element instanceof HTMLElement || element instanceof DocumentFragment);
-        if (!isNode) {
-            getBody = typeof getBody !== 'undefined' ?
-                getBody :
-                text.match(/<body[^>]*>/);
-        }
-        options = merge(this.options, options);
-        let n = isNode ? element : textToNode(element);
-        options.parent = n;
-        n = chunkNode.call(this, n, options);
-        if (!isNode) {
-            let html = '';
-            let body = n;
-            if (getBody) {
-                let h = n.querySelector('head');
-                let b = n.querySelector('body');
-                if (h) {
-                    html += h.innerHTML;
-                }
-                if (b) {
-                    body = b;
-                }
-                html += body.innerHTML;
-            } else {
-                html = body.outerHTML;
-            }
-            return html;
-        }
-        return element;
-    }
+    options = merge(DEFAULTS, options);
+    return chunkNode(element, element, options);
 }
