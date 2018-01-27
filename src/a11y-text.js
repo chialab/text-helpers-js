@@ -1,7 +1,7 @@
 import { merge, Symbolic } from '@chialab/proteins';
 import { FontAnalyzer } from './font-analyzer.js';
 import { LineHeight } from './line-height.js';
-import { TextTagger } from './text-tagger.js';
+import chunk from './chunk.js';
 
 let ids = 1;
 
@@ -52,12 +52,7 @@ export class A11yText {
             this.paragraphSpacing = this.lineHeightToParagraphSpacing(this.lineHeight);
         }
         if (this.options.tagger) {
-            this.tagger = new TextTagger(
-                this.options.tagger
-            );
-            this.tagger.tag(
-                this.element
-            );
+            chunk(this.element, this.options.tagger);
             this.tokens = Array.prototype.slice.call(this.element.querySelectorAll(
                 `.${this.tagger.options.tokenSpeaking}, .${this.tagger.options.punctuationClass}`
             ), 0);
