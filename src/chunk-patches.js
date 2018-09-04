@@ -1,4 +1,3 @@
-import { merge } from '@chialab/proteins';
 import { CharAnalyzer } from './char-analyzer.js';
 import { NodeParents } from './utils/node-parents.js';
 
@@ -6,13 +5,14 @@ import { NodeParents } from './utils/node-parents.js';
  * Create tagger span wrapper.
  * @private
  *
- * @param {object} options A set of tagger options.
+ * @param {string} tag The wrapper tagName.
+ * @param {string} [className] The optional className for the wrapper.
  * @return {HTMLElement} The tagger span wrapper.
  */
-function createWrapper(options) {
-    let el = document.createElement(options.tokenTag);
-    if (options.useClasses) {
-        el.setAttribute('class', options.tokenClass);
+function createWrapper(tag, className) {
+    let el = document.createElement(tag);
+    if (className) {
+        el.className = className;
     }
     return el;
 }
@@ -22,6 +22,10 @@ function wrapElement(node, wrapper) {
     parent.insertBefore(wrapper, node);
     wrapper.appendChild(node);
 }
+
+const includes = Array.prototype.includes || function(item) {
+    return (this.indexOf(item) !== -1);
+};
 
 function wrapElements(root, node1, node2, wrapper) {
     let parents1 = new NodeParents(root, node1);
@@ -33,7 +37,7 @@ function wrapElements(root, node1, node2, wrapper) {
         while (node) {
             let parents = new NodeParents(root, node);
             let before = parents.getLower(parent) || node;
-            if (children.indexOf(before) === -1) {
+            if (!includes.call(children, before)) {
                 children.push(before);
             }
             if (node !== node2) {
@@ -51,25 +55,7 @@ function wrapElements(root, node1, node2, wrapper) {
     }
 }
 
-function isFunction(fn) {
-    return typeof fn === 'function';
-}
-
 export class TextPatch {
-    constructor(root, start, end) {
-        this.root = root;
-        this.setStart(start);
-        this.setEnd(end);
-    }
-    setStart(start) {
-        this.start = start;
-    }
-    setEnd(end) {
-        this.end = end;
-    }
-    exec() {
-        return false;
-    }
     static sort(patch1, patch2) {
         let start1 = patch1.start;
         let start2 = patch2.start;
@@ -90,27 +76,37 @@ export class TextPatch {
         }
         return 0;
     }
+
+    constructor(root, start, end) {
+        this.root = root;
+        this.setStart(start);
+        this.setEnd(end);
+    }
+
+    setStart(start) {
+        this.start = start;
+    }
+
+    setEnd(end) {
+        this.end = end;
+    }
+
+    exec() {
+        return false;
+    }
 }
 
 export class SentenceTextPatch extends TextPatch {
     get type() {
         return 0;
     }
-    exec(options) {
+
+    exec({ tokenTag, tokenClass, tokenSentence, useClasses }) {
         if (this.start && this.end) {
-            let charClass = options.tokenClass;
-            if (options.tokenSentence) {
-                if (isFunction(options.tokenSentence)) {
-                    charClass += ` ${options.tokenSentence(this)}`;
-                } else {
-                    charClass += ` ${options.tokenSentence}`;
-                }
+            if (tokenSentence) {
+                tokenClass += ` ${tokenSentence}`;
             }
-            let wrapper = createWrapper(
-                merge(options, {
-                    tokenClass: charClass,
-                })
-            );
+            let wrapper = createWrapper(tokenTag, useClasses && tokenClass);
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
@@ -127,21 +123,13 @@ export class SpeakingTextPatch extends TextPatch {
     get type() {
         return 1;
     }
-    exec(options) {
+
+    exec({ tokenTag, tokenClass, tokenSpeaking, useClasses }) {
         if (this.start && this.end) {
-            let charClass = options.tokenClass;
-            if (options.tokenSpeaking) {
-                if (isFunction(options.tokenSpeaking)) {
-                    charClass += ` ${options.tokenSpeaking(this)}`;
-                } else {
-                    charClass += ` ${options.tokenSpeaking}`;
-                }
+            if (tokenSpeaking) {
+                tokenClass += ` ${tokenSpeaking}`;
             }
-            let wrapper = createWrapper(
-                merge(options, {
-                    tokenClass: charClass,
-                })
-            );
+            let wrapper = createWrapper(tokenTag, useClasses && tokenClass);
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
@@ -158,21 +146,13 @@ export class WordTextPatch extends TextPatch {
     get type() {
         return 2;
     }
-    exec(options) {
+
+    exec({ tokenTag, tokenClass, tokenWord, useClasses }) {
         if (this.start && this.end) {
-            let charClass = options.tokenClass;
-            if (options.tokenWord) {
-                if (isFunction(options.tokenWord)) {
-                    charClass += ` ${options.tokenWord(this)}`;
-                } else {
-                    charClass += ` ${options.tokenWord}`;
-                }
+            if (tokenWord) {
+                tokenClass += ` ${tokenWord}`;
             }
-            let wrapper = createWrapper(
-                merge(options, {
-                    tokenClass: charClass,
-                })
-            );
+            let wrapper = createWrapper(tokenTag, useClasses && tokenClass);
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
@@ -189,38 +169,22 @@ export class LetterTextPatch extends TextPatch {
     get type() {
         return 3;
     }
-    exec(options) {
+
+    exec({ tokenTag, tokenClass, punctuationClass, sentenceStopClass, tokenLetter, useClasses }) {
         if (this.start) {
             let char = this.start.textContent;
             let isPunctuation = CharAnalyzer.isPunctuation(char);
-            let charClass = options.tokenClass;
-            if (options.tokenLetter) {
-                if (isFunction(options.tokenLetter)) {
-                    charClass += ` ${options.tokenLetter(this)}`;
-                } else {
-                    charClass += ` ${options.tokenLetter}`;
-                }
+            if (tokenLetter) {
+                tokenClass += ` ${tokenLetter}`;
             }
-            if (isPunctuation && options.punctuationClass) {
-                if (isFunction(options.punctuationClass)) {
-                    charClass += ` ${options.punctuationClass(this)}`;
-                } else {
-                    charClass += ` ${options.punctuationClass}`;
-                }
+            if (isPunctuation && punctuationClass) {
+                tokenClass += ` ${punctuationClass}`;
             }
             if (isPunctuation &&
-                options.sentenceStopClass && CharAnalyzer.isStopPunctuation(char)) {
-                if (isFunction(options.sentenceStopClass)) {
-                    charClass += ` ${options.sentenceStopClass(this)}`;
-                } else {
-                    charClass += ` ${options.sentenceStopClass}`;
-                }
+                sentenceStopClass && CharAnalyzer.isStopPunctuation(char)) {
+                tokenClass += ` ${sentenceStopClass}`;
             }
-            let wrapper = createWrapper(
-                merge(options, {
-                    tokenClass: charClass,
-                })
-            );
+            let wrapper = createWrapper(tokenTag, useClasses && tokenClass);
             this.wrapper = wrapper;
             wrapElement(this.start, wrapper);
             return true;
