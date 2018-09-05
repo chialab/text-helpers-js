@@ -11,7 +11,7 @@
         <img alt="Travis status" src="https://img.shields.io/travis/Chialab/text-helpers-js.svg?style=flat-square">
     </a>
     <a href="https://codecov.io/gh/Chialab/text-helper-js">
-        <img alt="Code coverage" src="https://img.shields.io/codecov/c/github/chialab/text-helper-js.svg?style=flat-square">
+        <img alt="Code coverage" src="https://img.shields.io/codecov/c/github/chialab/text-helpers-js.svg?style=flat-square">
     </a>
     <a href="https://www.npmjs.com/package/@chialab/text-helpers">
         <img alt="NPM" src="https://img.shields.io/npm/v/@chialab/text-helpers.svg?style=flat-square">
@@ -40,13 +40,6 @@ Use via cdn:
 ```html
 <script type="text/javascript" src="https://unpkg.com/@chialab/text-helpers"></script>
 ```
-
-## Development
-### Requirements
-
-* Node (>= 6)
-* RNA cli (`npm install @chialab/rna-cli`)
-
 
 ## Development
 ### Requirements
