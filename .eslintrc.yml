@@ -5,6 +5,8 @@ extends:
 
 globals:
   assert: true
+  expect: true
+  should: true
   process: true
 
 env:
