@@ -35,7 +35,7 @@ export function loadFonts(callback) {
                 setTimeout(() => {
                     LOAD_PROMISE.forEach((fn) => fn());
                     LOAD_PROMISE = true;
-                }, 1000);
+                }, 2000);
             },
         });
     } else if (Array.isArray(LOAD_PROMISE)) {
