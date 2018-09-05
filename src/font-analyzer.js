@@ -1,4 +1,4 @@
-import measureText from './utils/measurer.js';
+import FontMetrics from 'fontmetrics';
 
 /**
  * Measure the size of a text.
@@ -9,18 +9,14 @@ import measureText from './utils/measurer.js';
  * @param {Number} size The font size.
  * @return {Object} An object with `width` and `height` values.
  */
-function measure(name, text, size) {
+function measure(name) {
     measure.cache = measure.cache || {};
-    let cacheKey = `${name}_${text}_${size}`;
-    if (!measure.cache[cacheKey]) {
-        measure.cache[cacheKey] = measureText({
-            text,
-            fontSize: `${size}`,
-            fontWeight: 'normal',
+    if (!measure.cache[name]) {
+        measure.cache[name] = FontMetrics({
             fontFamily: name,
         });
     }
-    return measure.cache[cacheKey];
+    return measure.cache[name];
 }
 
 /**
@@ -35,10 +31,7 @@ export class FontAnalyzer {
      * @return {Number} The x-height of the font.
      */
     static getXHeight(name) {
-        const TEXT = 'x';
-        const SIZE = '1000px';
-        let size = measure(name, TEXT, SIZE);
-        return size.height;
+        return -measure(name).xHeight * 1000;
     }
     /**
      * Get the ascend-height of the font.
@@ -47,9 +40,8 @@ export class FontAnalyzer {
      * @return {Number} The ascend-height of the font.
      */
     static getAscHeight(name) {
-        const TEXT = 'l';
-        const SIZE = '1000px';
-        let size = measure(name, TEXT, SIZE);
-        return size.height - FontAnalyzer.getXHeight(name);
+        let xHeight = this.getXHeight(name);
+        let ascent = -measure(name).ascent * 1000;
+        return ascent - xHeight;
     }
 }

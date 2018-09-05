@@ -343,6 +343,10 @@ flat-cache@^1.2.1:
     graceful-fs "^4.1.2"
     write "^0.2.1"
 
+fontmetrics@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/fontmetrics/-/fontmetrics-1.0.0.tgz#38b205a1eb2e331a77f93fda4028c7037a2869a7"
+
 fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"

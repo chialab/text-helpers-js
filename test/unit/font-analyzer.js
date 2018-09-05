@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 import './polyfills.js';
 import { FontAnalyzer } from '../../src/font-analyzer.js';
-import { FONTS, almostEqual, loadFonts } from './fonts-info.js';
+import { FONTS, loadFonts } from './fonts-info.js';
 
 describe('Unit: FontAnalyzer', function() {
     this.timeout(4 * 60 * 1000);
@@ -14,7 +14,7 @@ describe('Unit: FontAnalyzer', function() {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert(almostEqual(FontAnalyzer.getXHeight(name), FONTS[name].xHeight, 2));
+                    expect(FontAnalyzer.getXHeight(name)).to.be.within(FONTS[name].xHeight - 5, FONTS[name].xHeight + 5);
                 });
             }
         }
@@ -23,7 +23,7 @@ describe('Unit: FontAnalyzer', function() {
         for (let name in FONTS) {
             if (FONTS.hasOwnProperty(name)) {
                 it(`check ${name}`, () => {
-                    assert(almostEqual(FontAnalyzer.getAscHeight(name), FONTS[name].ascHeight, 2));
+                    expect(FontAnalyzer.getAscHeight(name)).to.be.within(FONTS[name].ascHeight - 5, FONTS[name].xHeight + 5);
                 });
             }
         }
