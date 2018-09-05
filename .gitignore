@@ -2,7 +2,7 @@
 
 # RNA-CORE
 /node_modules
-/coverage
+/reports
 npm-debug.log
 .eslintcache
 # RNA-CORE
