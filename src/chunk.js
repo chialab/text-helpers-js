@@ -9,6 +9,42 @@ import {
 } from './chunk-patches.js';
 import { Counter } from './utils/counter.js';
 
+const MODES = {
+    letter: 'letter',
+    space: 'space',
+    punctuation: 'punctuation',
+    word: 'word',
+    speaking: 'speaking',
+    sentence: 'sentence',
+};
+
+const SYMBOLS = {
+    isLast: '__isLast',
+    isWhiteSpace: '__isWhiteSpace',
+    isNewLine: '__isNewLine',
+    isPunctuation: '__isPunctuation',
+    isStopPunctuation: '__isStopPunctuation',
+    isStartPunctuation: '__isStartPunctuation',
+    isLetter: '__isLetter',
+    isApostrophe: '__isApostrophe',
+};
+
+/**
+ * Check if a mode is enabled.
+ *
+ * @param {Array<string>} list A list of active modes.
+ * @param {...string} modes Modes to check.
+ * @return {boolean}
+ */
+function useModes(list, ...modes) {
+    for (let i = 0; i < modes.length; i++) {
+        if (list.indexOf(modes[i]) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Check if a node is the last of a block ancestor.
  * @private
@@ -18,10 +54,10 @@ import { Counter } from './utils/counter.js';
  * @return {Boolean}
  */
 function isLastBlockNode(node, options = {}) {
-    if (node.hasOwnProperty('__isLast')) {
-        return node.__isLast;
+    if (SYMBOLS.isLast in node) {
+        return node[SYMBOLS.isLast];
     }
-    node.__isLast = (function() {
+    node[SYMBOLS.isLast] = (function() {
         if (!node.nextToken) {
             return true;
         }
@@ -48,7 +84,7 @@ function isLastBlockNode(node, options = {}) {
         }
         return false;
     }());
-    return node.__isLast;
+    return node[SYMBOLS.isLast];
 }
 
 /**
@@ -59,11 +95,11 @@ function isLastBlockNode(node, options = {}) {
  * @return {Boolean}
  */
 function isWhiteSpace(node) {
-    if (node.hasOwnProperty('__isWhiteSpace')) {
-        return node.__isWhiteSpace;
+    if (SYMBOLS.isWhiteSpace in node) {
+        return node[SYMBOLS.isWhiteSpace];
     }
-    node.__isWhiteSpace = CharAnalyzer.isWhiteSpace(node.textContent);
-    return node.__isWhiteSpace;
+    node[SYMBOLS.isWhiteSpace] = CharAnalyzer.isWhiteSpace(node.textContent);
+    return node[SYMBOLS.isWhiteSpace];
 }
 
 /**
@@ -74,11 +110,11 @@ function isWhiteSpace(node) {
  * @return {Boolean}
  */
 function isNewLine(node) {
-    if (node.hasOwnProperty('__isNewLine')) {
-        return node.__isNewLine;
+    if (SYMBOLS.isNewLine in node) {
+        return node[SYMBOLS.isNewLine];
     }
-    node.__isNewLine = !node.textContent.match(/[^\n]/) && CharAnalyzer.isNewLine(node.textContent);
-    return node.__isNewLine;
+    node[SYMBOLS.isNewLine] = !node.textContent.match(/[^\n]/) && CharAnalyzer.isNewLine(node.textContent);
+    return node[SYMBOLS.isNewLine];
 }
 
 /**
@@ -89,11 +125,11 @@ function isNewLine(node) {
  * @return {Boolean}
  */
 function isPunctuation(node) {
-    if (node.hasOwnProperty('__isPunctuation')) {
-        return node.__isPunctuation;
+    if (SYMBOLS.isPunctuation in node) {
+        return node[SYMBOLS.isPunctuation];
     }
-    node.__isPunctuation = CharAnalyzer.isPunctuation(node.textContent);
-    return node.__isPunctuation;
+    node[SYMBOLS.isPunctuation] = CharAnalyzer.isPunctuation(node.textContent);
+    return node[SYMBOLS.isPunctuation];
 }
 
 /**
@@ -104,11 +140,11 @@ function isPunctuation(node) {
  * @return {Boolean}
  */
 function isStopPunctuation(node) {
-    if (node.hasOwnProperty('__isStopPunctuation')) {
-        return node.__isStopPunctuation;
+    if (SYMBOLS.isStopPunctuation in node) {
+        return node[SYMBOLS.isStopPunctuation];
     }
-    node.__isStopPunctuation = CharAnalyzer.isStopPunctuation(node.textContent);
-    return node.__isStopPunctuation;
+    node[SYMBOLS.isStopPunctuation] = CharAnalyzer.isStopPunctuation(node.textContent);
+    return node[SYMBOLS.isStopPunctuation];
 }
 
 /**
@@ -119,11 +155,11 @@ function isStopPunctuation(node) {
  * @return {Boolean}
  */
 function isStartPunctuation(node) {
-    if (node.hasOwnProperty('__isStartPunctuation')) {
-        return node.__isStartPunctuation;
+    if (SYMBOLS.isStartPunctuation in node) {
+        return node[SYMBOLS.isStartPunctuation];
     }
-    node.__isStartPunctuation = CharAnalyzer.isStartPunctuation(node.textContent);
-    return node.__isStartPunctuation;
+    node[SYMBOLS.isStartPunctuation] = CharAnalyzer.isStartPunctuation(node.textContent);
+    return node[SYMBOLS.isStartPunctuation];
 }
 
 /**
@@ -134,12 +170,12 @@ function isStartPunctuation(node) {
  * @return {boolean}
  */
 function isLetter(node) {
-    if (node.hasOwnProperty('__isLetter')) {
-        return node.__isLetter;
+    if (SYMBOLS.isLetter in node) {
+        return node[SYMBOLS.isLetter];
     }
-    node.__isLetter = !isWhiteSpace(node) &&
+    node[SYMBOLS.isLetter] = !isWhiteSpace(node) &&
         !isPunctuation(node);
-    return node.__isLetter;
+    return node[SYMBOLS.isLetter];
 }
 
 const APOSTROPHE_REGEX = /[’|']/;
@@ -152,11 +188,11 @@ const APOSTROPHE_REGEX = /[’|']/;
  * @return {boolean}
  */
 function isApostrophe(node) {
-    if (node.hasOwnProperty('__isApostrophe')) {
-        return node.__isApostrophe;
+    if (SYMBOLS.isApostrophe in node) {
+        return node[SYMBOLS.isApostrophe];
     }
-    node.__isApostrophe = node.textContent.match(APOSTROPHE_REGEX);
-    return node.__isApostrophe;
+    node[SYMBOLS.isApostrophe] = node.textContent.match(APOSTROPHE_REGEX);
+    return node[SYMBOLS.isApostrophe];
 }
 
 /**
@@ -202,24 +238,53 @@ function findAllTextNodes(root, node, options = {}) {
 }
 
 /**
- * Split a text node in single character chunks.
+ * Split a text node in single token chunks.
  * @private
  *
  * @param {Text} node The text node to split.
+ * @param {Object} options Chunk options.
  * @return {Array} A list of chunks.
  */
-function splitTextNode(node) {
+function splitTextNode(node, options) {
+    let modes = options.modes;
     let text = node.textContent;
     let nodes = [];
+    let token = '';
     for (let z = 0; z < text.length; z++) {
         let char = text[z];
         let nextChar = text[z + 1];
         if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
             char += nextChar;
             z++;
+            nextChar = text[z + 1];
         }
-        let textNode = document.createTextNode(char);
-        nodes.push(textNode);
+        token += char;
+        let split = !nextChar;
+        if (!split) {
+            if (useModes(modes, MODES.letter)) {
+                split = true;
+            } else if (
+                (CharAnalyzer.isWhiteSpace(char) || CharAnalyzer.isWhiteSpace(nextChar)) &&
+                useModes(modes, MODES.space, MODES.word, MODES.speaking)
+            ) {
+                split = true;
+            } else if (
+                (CharAnalyzer.isPunctuation(char) || CharAnalyzer.isPunctuation(nextChar)) &&
+                useModes(modes, MODES.speaking, MODES.word, MODES.punctuation)
+            ) {
+                split = true;
+            } else if (
+                CharAnalyzer.isStopPunctuation(char) &&
+                useModes(modes, MODES.sentence)
+            ) {
+                split = true;
+            }
+        }
+        if (split) {
+            let textNode = document.createTextNode(token);
+            nodes.push(textNode);
+            token = '';
+        }
     }
     return nodes;
 }
@@ -229,10 +294,11 @@ function splitTextNode(node) {
  * @private
  *
  * @param {Text} node The text node to replace.
+ * @param {Object} options Chunk options.
  * @return {Array} A list of chunks.
  */
-function replaceTextNode(node) {
-    let nodes = splitTextNode(node);
+function replaceTextNode(node, options) {
+    let nodes = splitTextNode(node, options);
     let parent = node.parentNode;
     let ref;
     nodes.forEach((child, index) => {
@@ -300,7 +366,7 @@ function getPatches(root, node, options = {}) {
     let textNodes = [];
     findAllTextNodes(root, node, options)
         .forEach((child) => {
-            let children = replaceTextNode(child);
+            let children = replaceTextNode(child, options);
             textNodes.push(...children);
         });
     let last;
@@ -313,7 +379,7 @@ function getPatches(root, node, options = {}) {
         last = n;
     });
     let patches = [];
-    if (modes.indexOf('sentence') !== -1) {
+    if (useModes(modes, MODES.sentence)) {
         let desc = new SentenceTextPatch(node);
         for (let index = 0, len = textNodes.length; index < len; index++) {
             let child = textNodes[index];
@@ -345,7 +411,7 @@ function getPatches(root, node, options = {}) {
             }
         }
     }
-    if (modes.indexOf('speaking') !== -1) {
+    if (useModes(modes, MODES.speaking)) {
         let desc = new SpeakingTextPatch(node);
         textNodes.forEach((child, index) => {
             let next = textNodes[index + 1];
@@ -370,7 +436,7 @@ function getPatches(root, node, options = {}) {
             }
         });
     }
-    if (modes.indexOf('word') !== -1) {
+    if (useModes(modes, MODES.word)) {
         let desc = new WordTextPatch(node);
         textNodes.forEach((child, index) => {
             let isLet = isLetter(child);
@@ -390,19 +456,19 @@ function getPatches(root, node, options = {}) {
             }
         });
     }
-    if (modes.indexOf('letter') !== -1) {
+    if (useModes(modes, MODES.letter)) {
         textNodes.forEach((child) => {
             patches.push(new LetterTextPatch(node, child));
         });
     } else {
-        if (modes.indexOf('space') !== -1) {
+        if (useModes(modes, MODES.space)) {
             textNodes.forEach((child) => {
                 if (isWhiteSpace(child)) {
                     patches.push(new LetterTextPatch(node, child));
                 }
             });
         }
-        if (modes.indexOf('punctuation') !== -1) {
+        if (useModes(modes, MODES.punctuation)) {
             textNodes.forEach((child) => {
                 if (isPunctuation(child)) {
                     patches.push(new LetterTextPatch(node, child));
@@ -452,7 +518,7 @@ function chunkNode(root, node, options = {}, counter = new Counter()) {
 const DEFAULTS = {
     setId: true,
     useClasses: false,
-    modes: ['letter'],
+    modes: [MODES.letter],
     tokenIdAttr: 'data-token-id',
     tokenTag: 't:span',
     tokenClass: 'tagger--token',
