@@ -7,16 +7,16 @@
 </p>
 
 <p align="center">
-    <a href="https://travis-ci.org/Chialab/text-helpers-js">
-        <img alt="Travis status" src="https://img.shields.io/travis/Chialab/text-helpers-js.svg?style=flat-square">
+    <a href="https://travis-ci.org/chialab/text-helpers-js">
+        <img alt="Travis status" src="https://img.shields.io/travis/chialab/text-helpers-js.svg?style=flat-square">
     </a>
-    <a href="https://codecov.io/gh/Chialab/text-helper-js">
+    <a href="https://codecov.io/gh/chialab/text-helper-js">
         <img alt="Code coverage" src="https://img.shields.io/codecov/c/github/chialab/text-helpers-js.svg?style=flat-square">
     </a>
     <a href="https://www.npmjs.com/package/@chialab/text-helpers">
         <img alt="NPM" src="https://img.shields.io/npm/v/@chialab/text-helpers.svg?style=flat-square">
     </a>
-    <a href="https://github.com/Chialab/text-helpers-js/blob/master/LICENSE">
+    <a href="https://github.com/chialab/text-helpers-js/blob/master/LICENSE">
         <img alt="License" src="https://img.shields.io/npm/l/@chialab/text-helpers.svg?style=flat-square">
     </a>
     <a href="https://saucelabs.com/u/chialab-sl-012">
