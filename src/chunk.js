@@ -427,7 +427,8 @@ function getPatches(root, node, options = {}) {
                     !next ||
                     isWhiteSpace(next) ||
                     isLastBlockNode(child, options) ||
-                    isNotWrappable(desc.start, next)
+                    isNotWrappable(desc.start, next) ||
+                    (desc.start.parentNode !== next.parentNode && next.parentNode.childNodes.length !== 1)
                 )
             ) {
                 desc.setEnd(child);
