@@ -54,18 +54,18 @@ $ yarn global add @chialab/rna-cli
 ### Build the project
 
 ```
-$ rna install
-$ rna build --production
+$ yarn install
+$ yarn build
 ```
 
 ### Watch the project
 ```
-$ rna install
-$ rna build --watch
+$ yarn install
+$ yarn watch
 ```
 
 ### Test the project
 ```
-$ rna install
-$ rna unit
+$ yarn install
+$ yarn test
 ```

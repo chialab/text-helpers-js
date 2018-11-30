@@ -14,6 +14,7 @@ jobs:
         - export DISPLAY=:99.0
         - sh -e /etc/init.d/xvfb start
         - yarn global add @chialab/rna-cli
+        - yarn install
       script:
         - rna unit --coverage
     - stage: test
@@ -21,6 +22,7 @@ jobs:
       env: CI_BUILD_TYPE=saucelabs
       before_install:
         - yarn global add @chialab/rna-cli
+        - yarn install
       script:
         - rna unit --saucelabs
   allow_failures:
@@ -28,4 +30,4 @@ jobs:
 
 after_success:
   - npm install -g codecov
-  - cat reports/unit/coverage/report-lcov/*/lcov.info | codecov
+  - cat reports/unit/coverage/*/lcov.info | codecov

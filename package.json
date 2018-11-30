@@ -4,26 +4,43 @@
   "description": "A set of helpers for text manipulation.",
   "main": "dist/text-helpers.js",
   "module": "src/index.js",
-  "scripts": {
-    "build": "rna lint 'src/**/*' + build --production",
-    "test": "rna unit"
-  },
   "keywords": [
     "Chialab",
     "text",
     "tag",
     "analyze"
   ],
-  "author": "Chialab <dev@chialab.io> (http://www.chialab.it)",
+  "author": "Chialab <dev@chialab.io> (https://www.chialab.it)",
   "license": "MIT",
   "structure": "module",
   "devDependencies": {
-    "eslint": "^4.10.0",
-    "eslint-plugin-mocha": "^4.11.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.9.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-mocha": "^5.2.0",
+    "stylelint": "^9.9.0",
+    "stylelint-order": "^2.0.0",
     "webfontloader": "^1.6.28"
   },
   "dependencies": {
-    "@chialab/proteins": "^3.0.0-rc.5",
+    "@chialab/proteins": "^3.0.0",
     "fontmetrics": "^1.0.0"
+  },
+  "directories": {
+    "src": "src",
+    "lib": "dist",
+    "test": "test"
+  },
+  "scripts": {
+    "build": "rna build --production",
+    "watch": "rna build --watch",
+    "test": "rna lint + unit",
+    "lint": "rna lint",
+    "start": "yarn install --ignore-scripts && rna build --watch",
+    "prepublish": "yarn run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Chialab/text-helpers-js.git"
   }
 }
