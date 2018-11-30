@@ -16,7 +16,7 @@ jobs:
         - yarn global add @chialab/rna-cli
         - yarn install
       script:
-        - rna unit --coverage
+        - rna unit --coverage --browser
     - stage: test
       node_js: 8
       env: CI_BUILD_TYPE=saucelabs
