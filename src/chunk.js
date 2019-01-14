@@ -250,7 +250,7 @@ function splitTextNode(node, options) {
     let text = node.textContent;
     let nodes = [];
     let token = '';
-    for (let z = 0; z < text.length; z++) {
+    for (let z = 0, len = text.length; z < len; z++) {
         let char = text[z];
         let nextChar = text[z + 1];
         if (nextChar && CharAnalyzer.isDiacritic(nextChar)) {
@@ -259,28 +259,40 @@ function splitTextNode(node, options) {
             nextChar = text[z + 1];
         }
         token += char;
-        let split = !nextChar;
-        if (!split) {
-            if (useModes(modes, MODES.letter)) {
-                split = true;
-            } else if (
-                (CharAnalyzer.isWhiteSpace(char) || CharAnalyzer.isWhiteSpace(nextChar)) &&
-                useModes(modes, MODES.space, MODES.word, MODES.speaking)
-            ) {
-                split = true;
-            } else if (
-                (CharAnalyzer.isPunctuation(char) || CharAnalyzer.isPunctuation(nextChar)) &&
-                useModes(modes, MODES.speaking, MODES.word, MODES.punctuation)
-            ) {
-                split = true;
-            } else if (
-                CharAnalyzer.isStopPunctuation(char) &&
-                useModes(modes, MODES.sentence)
-            ) {
-                split = true;
-            }
+        let split;
+        if (z === len - 1) {
+            split = true;
+        } else if (useModes(modes, MODES.letter)) {
+            split = true;
+        } else if (
+            (CharAnalyzer.isWhiteSpace(char) || CharAnalyzer.isWhiteSpace(nextChar)) &&
+            useModes(modes, MODES.space, MODES.word, MODES.speaking)
+        ) {
+            split = true;
+        } else if (
+            (CharAnalyzer.isPunctuation(char) || CharAnalyzer.isPunctuation(nextChar)) &&
+            useModes(modes, MODES.speaking, MODES.word, MODES.punctuation)
+        ) {
+            split = true;
+        } else if (
+            CharAnalyzer.isStopPunctuation(char) &&
+            useModes(modes, MODES.sentence)
+        ) {
+            split = true;
         }
         if (split) {
+            if (!node.previousSibling && !nodes.length) {
+                token = token.replace(/^\s*/, '');
+                if (!token) {
+                    continue;
+                }
+            }
+            if (!node.nextSibling && z === len - 1) {
+                token = token.replace(/\s*$/, '');
+                if (!token) {
+                    continue;
+                }
+            }
             let textNode = document.createTextNode(token);
             nodes.push(textNode);
             token = '';
