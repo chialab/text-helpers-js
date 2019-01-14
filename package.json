@@ -34,7 +34,7 @@
   "scripts": {
     "build": "rna build --production",
     "watch": "rna build --watch",
-    "test": "rna lint + unit",
+    "test": "rna lint + unit --browser",
     "lint": "rna lint",
     "start": "yarn install --ignore-scripts && rna build --watch",
     "prepublish": "yarn run build"
