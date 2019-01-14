@@ -378,6 +378,12 @@ function getPatches(root, node, options = {}) {
     let textNodes = [];
     findAllTextNodes(root, node, options)
         .forEach((child) => {
+            if (child.textContent.trim() === '' &&
+                CharAnalyzer.isNewLine(child.textContent) &&
+                child.previousSibling === child.previousElementSibling &&
+                child.nextSibling === child.nextElementSibling) {
+                return;
+            }
             let children = replaceTextNode(child, options);
             textNodes.push(...children);
         });
