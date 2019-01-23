@@ -7,7 +7,7 @@ branches:
 jobs:
   include:
     - stage: test
-      node_js: 8
+      node_js: 10
       env: CI_BUILD_TYPE=default
       before_install:
         - export CHROME_BIN=chromium-browser
@@ -18,7 +18,7 @@ jobs:
       script:
         - rna unit --coverage --browser
     - stage: test
-      node_js: 8
+      node_js: 10
       env: CI_BUILD_TYPE=saucelabs
       before_install:
         - yarn global add @chialab/rna-cli
