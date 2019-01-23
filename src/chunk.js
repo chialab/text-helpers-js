@@ -403,7 +403,7 @@ function getPatches(root, node, options = {}) {
             let child = textNodes[index];
             let nextIndex = index + 1;
             let next = textNodes[nextIndex];
-            if (!desc.start && !isNewLine(child)) {
+            if (!desc.start && !isWhiteSpace(child)) {
                 desc.setStart(child);
             }
             if (desc.start &&
