@@ -46,6 +46,18 @@ function useModes(list, ...modes) {
 }
 
 /**
+ * Check if a node is a block.
+ * @private
+ *
+ * @param {Node} node The node to check.
+ * @param {Object} options Chunk options.
+ * @return {Boolean}
+ */
+function isBlockNode(node, options = {}) {
+    return !!(node.nodeType === Node.ELEMENT_NODE && options.blockSelector && node.matches(options.blockSelector));
+}
+
+/**
  * Check if a node is the last of a block ancestor.
  * @private
  *
@@ -223,6 +235,9 @@ function textToFragment(text) {
  */
 function findAllTextNodes(root, node, options = {}) {
     let textNodes = [];
+    if (isBlockNode(node, options)) {
+        node.innerHTML = node.innerHTML.trim();
+    }
     for (let i = 0, len = node.childNodes.length; i < len; i++) {
         let child = node.childNodes[i];
         if (child.nodeType === Node.TEXT_NODE) {
@@ -281,18 +296,6 @@ function splitTextNode(node, options) {
             split = true;
         }
         if (split) {
-            if (!node.previousSibling && !nodes.length) {
-                token = token.replace(/^\s*/, '');
-                if (!token) {
-                    continue;
-                }
-            }
-            if (!node.nextSibling && z === len - 1) {
-                token = token.replace(/\s*$/, '');
-                if (!token) {
-                    continue;
-                }
-            }
             let textNode = document.createTextNode(token);
             nodes.push(textNode);
             token = '';

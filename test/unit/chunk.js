@@ -4,7 +4,7 @@ import chunk from '../../src/chunk.js';
 
 const SIMPLE = 'The quick brown fox jumps over the lazy dog. Really?';
 const XML = `<p>
-    The <strong>quick</strong> brown <em>fox jumps</em> over the lazy dog
+    The <strong>quick </strong>brown <em>fox jumps</em> over the lazy dog
 </p>`;
 
 describe('Unit: chunk', () => {
