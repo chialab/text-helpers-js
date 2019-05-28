@@ -320,31 +320,13 @@ function replaceTextNode(node, options) {
         if (index === 0) {
             parent.replaceChild(child, node);
             ref = child.nextSibling;
+        } else if (ref) {
+            parent.insertBefore(child, ref);
         } else {
-            if (ref) {
-                parent.insertBefore(child, ref);
-            } else {
-                parent.appendChild(child);
-            }
+            parent.appendChild(child);
         }
     });
     return nodes;
-}
-
-/**
- * Get a list of ancestors for a node.
- * @private
- *
- * @param {Node} node The node.
- * @return {Array<Node>}
- */
-function getAncestors(node) {
-    let res = [];
-    while (node) {
-        res.push(node);
-        node = node.parentNode;
-    }
-    return res;
 }
 
 /**
@@ -355,16 +337,8 @@ function getAncestors(node) {
  * @param {Node} last The last node of a chunk.
  * @return {Boolean}
  */
-function isNotWrappable(first, last) {
-    let parents1 = getAncestors(first);
-    let parents2 = getAncestors(last);
-    while (parents2.length < parents1.length) {
-        let el = parents1.shift();
-        if (el.previousSibling) {
-            return true;
-        }
-    }
-    return false;
+function isWrappable(first, last) {
+    return first.__wrapper === last.__wrapper;
 }
 
 /**
@@ -387,17 +361,34 @@ function getPatches(root, node, options = {}) {
                 child.nextSibling === child.nextElementSibling) {
                 return;
             }
+            let parent = child.parentNode;
+            let ancestors = [];
+            while (parent) {
+                parent.__children = parent.__children || [];
+                ancestors.push(parent);
+                parent = parent.parentNode;
+            }
             let children = replaceTextNode(child, options);
+            children.forEach((textChild) => {
+                textChild.__ancestors = ancestors
+                    .map((parent) => {
+                        parent.__children.push(node);
+                        return parent;
+                    });
+            });
             textNodes.push(...children);
         });
     let last;
-    textNodes.forEach((n, index) => {
+    textNodes.forEach((node, index) => {
         if (last) {
-            last.nextToken = n;
-            n.prevToken = last;
+            last.nextToken = node;
+            node.prevToken = last;
         }
-        n.indexToken = index;
-        last = n;
+        node.indexToken = index;
+        let ancestors = node.__ancestors;
+        let wrapper = node.__wrapper = ancestors.find((parent) => parent.__children.length > 1) || ancestors[ancestors.length - 1];
+        node.__ancestor = ancestors[ancestors.indexOf(wrapper) - 1] || node;
+        last = node;
     });
     let patches = [];
     if (useModes(modes, MODES.sentence)) {
@@ -415,7 +406,7 @@ function getPatches(root, node, options = {}) {
                     isStartPunctuation(next) ||
                     isLastBlockNode(child, options) ||
                     (isStopPunctuation(child) && !isPunctuation(next) && !isLetter(next)) ||
-                    isNotWrappable(desc.start, next)
+                    !isWrappable(desc.start, next)
                 )
             ) {
                 if (!isLastBlockNode(child, options)) {
@@ -448,7 +439,7 @@ function getPatches(root, node, options = {}) {
                     !next ||
                     isWhiteSpace(next) ||
                     isLastBlockNode(child, options) ||
-                    isNotWrappable(desc.start, next) ||
+                    !isWrappable(desc.start, next) ||
                     (desc.start.parentNode !== next.parentNode && next.parentNode.childNodes.length !== 1)
                 )
             ) {
@@ -467,11 +458,11 @@ function getPatches(root, node, options = {}) {
                 desc.setStart(child);
             }
             if (desc.start &&
-                (isApostrophe(child) ||
+                ((isApostrophe(child) ||
                     !next ||
                     (!isLetter(next) && !isApostrophe(next)) ||
                     isLastBlockNode(child, options)) ||
-                    isNotWrappable(desc.start, next)) {
+                    !isWrappable(desc.start, next))) {
                 desc.setEnd(child);
                 patches.push(desc);
                 desc = new WordTextPatch(node);
