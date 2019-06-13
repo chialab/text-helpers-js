@@ -386,7 +386,7 @@ function getPatches(root, node, options = {}) {
         }
         node.indexToken = index;
         let ancestors = node.__ancestors;
-        let wrapper = node.__wrapper = ancestors.find((parent) => parent.__children.length > 1) || ancestors[ancestors.length - 1];
+        let wrapper = node.__wrapper = ancestors.find((parent) => parent.__children.length > 1 || isBlockNode(parent, options)) || ancestors[ancestors.length - 1];
         node.__ancestor = ancestors[ancestors.indexOf(wrapper) - 1] || node;
         last = node;
     });
