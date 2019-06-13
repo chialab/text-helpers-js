@@ -28,6 +28,7 @@ export class CharAnalyzer {
      */
     static isPunctuation(ch) {
         return this.NOT_ALPHABET_REGEX.test(ch) &&
+            !this.DIACRITICS_REGEX.test(ch) &&
             this.PUNCTUATION_REGEX.test(ch);
     }
     /**
@@ -94,4 +95,4 @@ CharAnalyzer.DIACRITICS_REGEX = /(?:[\u0300-\u036F\u0483-\u0489\u0591-\u05BD\u05
  * A regexp for not alphabet chars.
  * @type RegExp
  */
-CharAnalyzer.NOT_ALPHABET_REGEX = /[^a-zA-Z]/;
+CharAnalyzer.NOT_ALPHABET_REGEX = /[^A-Za-zÀ-ÖØ-öø-ÿ]/;
