@@ -1,6 +1,6 @@
 {
   "name": "@chialab/text-helpers",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "A set of helpers for text manipulation.",
   "main": "dist/text-helpers.js",
   "module": "src/index.js",
