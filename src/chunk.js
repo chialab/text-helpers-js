@@ -438,6 +438,7 @@ function getPatches(root, node, options = {}) {
                 (
                     !next ||
                     isWhiteSpace(next) ||
+                    isPunctuation(next) ||
                     isLastBlockNode(child, options) ||
                     !isWrappable(desc.start, next) ||
                     (desc.start.parentNode !== next.parentNode && next.parentNode.childNodes.length !== 1)
