@@ -372,7 +372,7 @@ function getPatches(root, node, options = {}) {
             children.forEach((textChild) => {
                 textChild.__ancestors = ancestors
                     .map((parent) => {
-                        parent.__children.push(node);
+                        parent.__children.push(child);
                         return parent;
                     });
             });
@@ -406,7 +406,7 @@ function getPatches(root, node, options = {}) {
                     isStartPunctuation(next) ||
                     isLastBlockNode(child, options) ||
                     (isStopPunctuation(child) && !isPunctuation(next) && !isLetter(next)) ||
-                    !isWrappable(desc.start, next)
+                    (!isWrappable(desc.start, next) && next.__wrapper.__children.find((wrapperChild) => isStopPunctuation(wrapperChild)))
                 )
             ) {
                 if (!isLastBlockNode(child, options)) {
@@ -438,7 +438,7 @@ function getPatches(root, node, options = {}) {
                 (
                     !next ||
                     isWhiteSpace(next) ||
-                    isPunctuation(next) ||
+                    (!isApostrophe(next) && isPunctuation(next)) ||
                     isLastBlockNode(child, options) ||
                     !isWrappable(desc.start, next) ||
                     (desc.start.parentNode !== next.parentNode && next.parentNode.childNodes.length !== 1)
