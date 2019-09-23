@@ -110,7 +110,7 @@ export class SentenceTextPatch extends TextPatch {
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
-                wrapElement(this.start.__ancestor, wrapper);
+                wrapElement(this.start.__ancestor || this.start, wrapper);
             }
             this.wrapper = wrapper;
             return true;
@@ -133,7 +133,7 @@ export class SpeakingTextPatch extends TextPatch {
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
-                wrapElement(this.start.__ancestor, wrapper);
+                wrapElement(this.start.__ancestor || this.start, wrapper);
             }
             this.wrapper = wrapper;
             return true;
@@ -156,7 +156,7 @@ export class WordTextPatch extends TextPatch {
             if (this.start !== this.end) {
                 wrapElements(this.root, this.start, this.end, wrapper);
             } else {
-                wrapElement(this.start.__ancestor, wrapper);
+                wrapElement(this.start.__ancestor || this.start, wrapper);
             }
             this.wrapper = wrapper;
             return true;
@@ -186,7 +186,7 @@ export class LetterTextPatch extends TextPatch {
             }
             let wrapper = createWrapper(tokenTag, useClasses && tokenClass);
             this.wrapper = wrapper;
-            wrapElement(this.start.__ancestor, wrapper);
+            wrapElement(this.start.__ancestor || this.start, wrapper);
             return true;
         }
         return false;
