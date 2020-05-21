@@ -5,6 +5,8 @@
 /reports
 npm-debug.log
 .eslintcache
+__generated__
+__coverage__
 # RNA-CORE
 
 # RNA-STRUCTURE
