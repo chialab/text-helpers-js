@@ -34,6 +34,7 @@ function wrapElements(root, node1, node2, wrapper) {
     if (parent) {
         let children = [];
         let node = node1;
+        let nextToken = node.nextToken;
         while (node) {
             let parents = new NodeParents(root, node);
             let before = parents.getLower(parent) || node;
@@ -41,7 +42,10 @@ function wrapElements(root, node1, node2, wrapper) {
                 children.push(before);
             }
             if (node !== node2) {
-                node = node.nextToken;
+                node = node.nextSibling || nextToken;
+                if (node === nextToken) {
+                    nextToken = node.nextToken;
+                }
             } else {
                 node = null;
             }
